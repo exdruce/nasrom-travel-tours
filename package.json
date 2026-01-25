@@ -1,0 +1,35 @@
+{
+  "name": "nasrom-travel-&-tours",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.9.1",
+    "clsx": "2.1.0",
+    "gsap": "3.12.5",
+    "i18next": "23.10.0",
+    "i18next-browser-languagedetector": "7.2.0",
+    "jimp": "^1.6.0",
+    "lucide-react": "0.344.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-helmet-async": "2.0.4",
+    "react-hook-form": "7.51.0",
+    "react-i18next": "14.1.0",
+    "react-router-dom": "6.22.3",
+    "sonner": "1.4.3",
+    "tailwind-merge": "2.2.1",
+    "zod": "3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NASROM Travel & Tours | Luxury Island Adventures</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Kaushan+Script&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                teal: "#168D95", // Main Brand Teal from Logo
+                dark: "#0E5C62", // Darker shade of brand teal
+                orange: "#DE7F21", // Brand Orange from Logo
+              },
+              navy: {
+                DEFAULT: "#071A2B",
+                light: "#0D2E4A",
+              },
+              // Keeping existing utility colors but remapping main ones
+              teal: {
+                DEFAULT: "#168D95",
+                light: "#4DC4CC",
+              },
+              gold: {
+                DEFAULT: "#DE7F21", // Remapped to Brand Orange
+                light: "#FFAB4A",
+              },
+              sand: {
+                DEFAULT: "#F5E6C8",
+                light: "#FBF5E8",
+              },
+            },
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+              serif: ["Playfair Display", "serif"],
+              script: ["Kaushan Script", "cursive"],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f9fafb;
+        overflow-x: hidden;
+      }
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-family: "Playfair Display", serif;
+      }
+      .font-script {
+        font-family: "Kaushan Script", cursive;
+      }
+      .glass-nav {
+        background: rgba(
+          22,
+          141,
+          149,
+          0.95
+        ); /* Updated to Brand Teal (#168D95) */
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "https://esm.sh/react@18.3.1",
+          "react/": "https://esm.sh/react@18.3.1/",
+          "react-dom": "https://esm.sh/react-dom@18.3.1",
+          "react-dom/": "https://esm.sh/react-dom@18.3.1/",
+          "react-router-dom": "https://esm.sh/react-router-dom@6.22.3?deps=react@18.3.1,react-dom@18.3.1",
+          "@hookform/resolvers/zod": "https://esm.sh/@hookform/resolvers@3.3.4/zod?deps=zod@3.22.4",
+          "tailwind-merge": "https://esm.sh/tailwind-merge@2.2.1",
+          "react-helmet-async": "https://esm.sh/react-helmet-async@2.0.4?deps=react@18.3.1,react-dom@18.3.1",
+          "zod": "https://esm.sh/zod@3.22.4",
+          "clsx": "https://esm.sh/clsx@2.1.0",
+          "lucide-react": "https://esm.sh/lucide-react@0.344.0?deps=react@18.3.1",
+          "gsap": "https://esm.sh/gsap@3.12.5",
+          "i18next-browser-languagedetector": "https://esm.sh/i18next-browser-languagedetector@7.2.0?deps=i18next@23.10.0",
+          "react-i18next": "https://esm.sh/react-i18next@14.1.0?deps=react@18.3.1,i18next@23.10.0",
+          "react-hook-form": "https://esm.sh/react-hook-form@7.51.0?deps=react@18.3.1",
+          "sonner": "https://esm.sh/sonner@1.4.3?deps=react@18.3.1,react-dom@18.3.1",
+          "i18next": "https://esm.sh/i18next@23.10.0",
+          "@hookform/resolvers/": "https://esm.sh/@hookform/resolvers@^5.2.2/"
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="/index.css" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
