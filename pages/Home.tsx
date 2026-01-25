@@ -5,7 +5,7 @@ import gsap from "gsap";
 import { ArrowRight, Palmtree, Sunset, Utensils, Anchor } from "lucide-react";
 import { Button } from "../components/ui/Button";
 
-import HeroImage from "../assets/images/photo_21_2026-01-23_23-44-26.jpg";
+import HeroImage from "../assets/images/jeti-nasrom.jpg";
 
 import PerhentianImage from "../assets/images/jeti-pp-3.png";
 import SunsetImage from "../assets/images/semerak.jpg";

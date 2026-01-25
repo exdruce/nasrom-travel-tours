@@ -1,6 +1,6 @@
-import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+import LanguageDetector from "i18next-browser-languagedetector";
 
 const resources = {
   ms: {
@@ -12,17 +12,19 @@ const resources = {
         packages: "Pakej",
         gallery: "Galeri",
         contact: "Hubungi",
-        bookNow: "Tempah Sekarang"
+        bookNow: "Tempah Sekarang",
       },
       footer: {
         about: "Tentang Kami",
-        aboutText: "NASROM Travel & Tours adalah penyedia perkhidmatan bot premium terulung dari Jeti Tok Bali ke destinasi pulau idaman anda.",
+        aboutText:
+          "NASROM Travel & Tours adalah penyedia perkhidmatan bot premium terulung dari Jeti Tok Bali ke destinasi pulau idaman anda.",
         contactInfo: "Hubungi Kami",
-        quickLinks: "Pautan Pantas"
+        quickLinks: "Pautan Pantas",
       },
       contact: {
         title: "Mulakan Perjalanan Anda",
-        subtitle: "Pasukan kami sedia membantu merancang percutian pulau yang sempurna untuk anda.",
+        subtitle:
+          "Pasukan kami sedia membantu merancang percutian pulau yang sempurna untuk anda.",
         form: {
           title: "Hantar Pertanyaan",
           name: "Nama Penuh",
@@ -31,47 +33,48 @@ const resources = {
           dest: "Destinasi Pilihan",
           msg: "Mesej / Permintaan Khas",
           submit: "Hantar Pertanyaan",
-          success: "Terima kasih! Kami akan menghubungi anda sebentar lagi."
-        }
+          success: "Terima kasih! Kami akan menghubungi anda sebentar lagi.",
+        },
       },
       profile: {
         title: "Mengenai Nasrom",
         story: "Warisan Kami",
         vision: "Visi",
-        mission: "Misi"
+        mission: "Misi",
       },
       schedule: {
         title: "Jadual Perjalanan",
         subtitle: "Masa berlepas harian dan kadar tambang terkini",
         perhentian: "Pulau Perhentian",
-        redang: "Pulau Redang",
+        jettyAccess: "Harga Akses Jeti & Tambahan",
         priceAdult: "Dewasa",
-        priceChild: "Kanak-kanak"
+        priceChild: "Kanak-kanak",
       },
       packages: {
         title: "Pakej Eksklusif",
         subtitle: "Pilih pengembaraan anda yang seterusnya",
         dayTrip: "Balik Hari",
         snorkeling: "Snorkeling",
-        fishing: "Memancing"
-      }
+        fishing: "Memancing",
+      },
     },
     home: {
       hero: {
         title: "Pelayaran Eksklusif ke Syurga Pulau",
         subtitle: "Gerbang Utama dari Tok Bali",
-        description: "Alami perjalanan mewah dan selesa ke Pulau Perhentian dan Redang dengan armada bot kabin moden kami.",
+        description:
+          "Alami perjalanan mewah dan selesa ke Pulau Perhentian dan Redang dengan armada bot kabin moden kami.",
         ctaPrimary: "Tempah Tiket",
-        ctaSecondary: "Lihat Jadual"
+        ctaSecondary: "Lihat Jadual",
       },
       services: {
         title: "Perkhidmatan Kami",
         subtitle: "Pengalaman Tanpa Batasan",
         perhentian: "Pulau Perhentian",
         redang: "Pulau Redang",
-        river: "Pelayaran Sungai"
-      }
-    }
+        river: "Pelayaran Sungai",
+      },
+    },
   },
   en: {
     common: {
@@ -82,17 +85,19 @@ const resources = {
         packages: "Packages",
         gallery: "Gallery",
         contact: "Contact",
-        bookNow: "Book Now"
+        bookNow: "Book Now",
       },
       footer: {
         about: "About Nasrom",
-        aboutText: "NASROM Travel & Tours is the premier provider of luxury boat transfers from Tok Bali Jetty to Malaysia's most stunning islands.",
+        aboutText:
+          "NASROM Travel & Tours is the premier provider of luxury boat transfers from Tok Bali Jetty to Malaysia's most stunning islands.",
         contactInfo: "Get in Touch",
-        quickLinks: "Navigate"
+        quickLinks: "Navigate",
       },
       contact: {
         title: "Let's Plan Your Getaway",
-        subtitle: "Our dedicated team is ready to craft your perfect island itinerary.",
+        subtitle:
+          "Our dedicated team is ready to craft your perfect island itinerary.",
         form: {
           title: "Send an Inquiry",
           name: "Full Name",
@@ -101,48 +106,49 @@ const resources = {
           dest: "Preferred Destination",
           msg: "Message / Special Requests",
           submit: "Submit Inquiry",
-          success: "Thank you! We will be in touch shortly."
-        }
+          success: "Thank you! We will be in touch shortly.",
+        },
       },
       profile: {
         title: "Our Legacy",
         story: "Our Story",
         vision: "Our Vision",
-        mission: "Our Mission"
+        mission: "Our Mission",
       },
       schedule: {
         title: "Ferry Schedule",
         subtitle: "Daily departure times and current fare rates",
         perhentian: "Perhentian Island",
-        redang: "Redang Island",
+        jettyAccess: "Jetty Access Price & Add On",
         priceAdult: "Adult",
-        priceChild: "Child"
+        priceChild: "Child",
       },
       packages: {
         title: "Curated Packages",
         subtitle: "Choose your next adventure",
         dayTrip: "Day Trip",
         snorkeling: "Snorkeling",
-        fishing: "Fishing"
-      }
+        fishing: "Fishing",
+      },
     },
     home: {
       hero: {
         title: "Premium Island Voyages",
         subtitle: "Your Gateway from Tok Bali",
-        description: "Experience the epitome of comfort on your journey to Perhentian & Redang Islands aboard our modern cabin cruisers.",
+        description:
+          "Experience the epitome of comfort on your journey to Perhentian & Redang Islands aboard our modern cabin cruisers.",
         ctaPrimary: "Book Your Voyage",
-        ctaSecondary: "View Schedule"
+        ctaSecondary: "View Schedule",
       },
       services: {
         title: "Our Services",
         subtitle: "Curated Experiences",
         perhentian: "Perhentian Island",
         redang: "Redang Island",
-        river: "River Cruise"
-      }
-    }
-  }
+        river: "River Cruise",
+      },
+    },
+  },
 };
 
 i18n
@@ -150,8 +156,8 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: 'en',
-    defaultNS: 'common',
+    fallbackLng: "en",
+    defaultNS: "common",
     interpolation: {
       escapeValue: false,
     },

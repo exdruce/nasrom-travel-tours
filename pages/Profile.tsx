@@ -2,12 +2,12 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Shield, Clock, Heart, Award } from "lucide-react";
 
-import HeroBg from "../assets/images/photo_18_2026-01-23_23-44-26.jpg";
+import HeroBg from "../assets/images/blend-bg.png";
 import StoryImage from "../assets/images/photo_15_2026-01-23_23-44-26.jpg";
 import Gallery1 from "../assets/images/photo_22_2026-01-23_23-44-26.jpg";
 import Gallery2 from "../assets/images/photo_19_2026-01-23_23-44-26.jpg";
 import Gallery3 from "../assets/images/photo_11_2026-01-23_23-44-26.jpg";
-import Gallery4 from "../assets/images/photo_9_2026-01-23_23-44-26.jpg";
+import Gallery4 from "../assets/images/IMG_8915.jpg";
 
 const Profile: React.FC = () => {
   const { t } = useTranslation("common");
