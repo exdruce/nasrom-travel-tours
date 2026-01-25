@@ -131,29 +131,29 @@ const Navbar: React.FC = () => {
       {/* Mobile Menu Overlay */}
       <div
         className={cn(
-          "md:hidden absolute top-full left-0 w-full bg-brand-teal/95 backdrop-blur-xl border-b border-white/10 shadow-2xl transition-all duration-300 ease-in-out overflow-hidden transform origin-top",
+          "md:hidden absolute top-[calc(100%+0.5rem)] left-4 right-4 bg-brand-teal/95 backdrop-blur-2xl border border-white/10 shadow-2xl shadow-black/20 rounded-3xl transition-all duration-300 ease-out transform origin-top",
           isOpen
-            ? "max-h-screen opacity-100 scale-y-100"
-            : "max-h-0 opacity-0 scale-y-95",
+            ? "scale-100 opacity-100 translate-y-0 visible"
+            : "scale-95 opacity-0 -translate-y-4 invisible pointer-events-none",
         )}
       >
-        <div className="px-6 py-8 space-y-4 flex flex-col items-center">
+        <div className="p-3 space-y-1 flex flex-col">
           {navLinks.map((link) => (
             <Link
               key={link.name}
               to={link.href}
               onClick={() => setIsOpen(false)}
               className={cn(
-                "text-lg font-medium w-full text-center py-3 rounded-xl transition-all",
+                "w-full text-center py-3 rounded-full text-sm font-medium transition-all duration-300 active:scale-95",
                 location.pathname === link.href
-                  ? "bg-white/10 text-brand-orange"
-                  : "text-white hover:bg-white/5 hover:text-brand-orange",
+                  ? "bg-brand-orange text-white shadow-lg shadow-brand-orange/20"
+                  : "text-white/90 hover:text-white hover:bg-white/10",
               )}
             >
               {link.name}
             </Link>
           ))}
-          <div className="pt-6 w-full">
+          <div className="pt-3 mt-2 border-t border-white/10 w-full px-1">
             <Link
               to="/contact"
               className="block w-full"
@@ -161,7 +161,7 @@ const Navbar: React.FC = () => {
             >
               <Button
                 fullWidth
-                className="bg-brand-orange text-white hover:bg-orange-500 border-none rounded-xl py-6 text-lg shadow-lg"
+                className="bg-brand-orange hover:bg-orange-500 text-white font-bold border-none shadow-lg shadow-brand-orange/20 rounded-full py-6 transition-all active:scale-95"
               >
                 {t("nav.bookNow")}
               </Button>
