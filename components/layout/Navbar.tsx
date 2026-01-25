@@ -4,12 +4,13 @@ import { useTranslation } from "react-i18next";
 import { Menu, X, Globe } from "lucide-react";
 import { Button } from "../ui/Button";
 import { cn } from "../../lib/utils";
+import Logo from "../../assets/logo.svg";
 
 // Brand Logo Component
 const BrandLogo = ({ scrolled }: { scrolled: boolean }) => (
   <div className="flex items-center group">
     <img
-      src="/assets/logo.svg"
+      src={Logo}
       alt="Nasrom Travel & Tours"
       className={cn(
         "h-24 sm:h-32 w-auto object-contain transition-all duration-300 drop-shadow-lg -my-3 sm:-my-5",
