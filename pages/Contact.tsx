@@ -51,7 +51,7 @@ const Contact: React.FC = () => {
 
     // Construct WhatsApp Message
     const text = `*New Inquiry via Website*%0A%0AName: ${data.name}%0AEmail: ${data.email}%0APhone: ${data.phone}%0ADestination: ${data.destination}%0APassengers: ${data.passengers}%0ADate: ${data.date}%0ANote: ${data.message || "N/A"}`;
-    const waLink = `https://wa.me/60123456789?text=${text}`;
+    const waLink = `https://wa.me/60139391888?text=${text}`;
 
     toast.success("Inquiry ready!", {
       description: "Redirecting you to WhatsApp to finalize details...",
@@ -254,7 +254,7 @@ const Contact: React.FC = () => {
                 support team immediately. We typically reply within 15 minutes.
               </p>
               <a
-                href="https://wa.me/60123456789"
+                href="https://wa.me/60139391888"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center w-full bg-white text-brand-teal py-3.5 rounded-xl hover:bg-teal-50 transition-colors font-bold shadow-lg relative z-10 transform hover:-translate-y-0.5"
@@ -321,7 +321,7 @@ const Contact: React.FC = () => {
                       Phone Support
                     </h4>
                     <p className="text-brand-orange font-bold text-lg tracking-tight">
-                      +60 12-345 6789
+                      +60 13-939 1888
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">
                       Available 8am - 10pm

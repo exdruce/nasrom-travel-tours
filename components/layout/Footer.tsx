@@ -54,7 +54,7 @@ const Footer: React.FC = () => {
               <li className="flex items-center space-x-3 group">
                 <Phone className="w-5 h-5 text-brand-orange flex-shrink-0" />
                 <span className="group-hover:text-white transition-colors">
-                  +60 12-345 6789
+                  +60 13-939 1888
                 </span>
               </li>
               <li className="flex items-center space-x-3 group">
