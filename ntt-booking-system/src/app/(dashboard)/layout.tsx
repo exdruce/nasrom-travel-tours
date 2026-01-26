@@ -24,6 +24,17 @@ export default async function DashboardLayout({
     .eq("id", user.id)
     .single();
 
+  // Check for business
+  const { data: business } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("owner_id", user.id)
+    .single();
+
+  if (!business) {
+    redirect("/onboarding");
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader user={user} profile={profile} />

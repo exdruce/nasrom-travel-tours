@@ -1,6 +1,3 @@
-// Database Types - Generated from Supabase Schema
-// These match the schema.sql structure
-
 export type UserRole = "admin" | "owner" | "staff" | "customer";
 export type BookingStatus =
   | "pending"
@@ -16,6 +13,14 @@ export type PaymentStatus =
   | "refunded";
 export type PaymentMethod = "card" | "fpx" | "grabpay" | "other";
 export type BookingItemType = "variant" | "addon";
+
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
 
 export interface Profile {
   id: string;
@@ -36,10 +41,7 @@ export interface Business {
   description: string | null;
   logo_url: string | null;
   banner_url: string | null;
-  branding: {
-    primary_color?: string;
-    secondary_color?: string;
-  } | null;
+  branding: Json | null;
   contact_phone: string | null;
   contact_email: string | null;
   address: string | null;
@@ -58,7 +60,7 @@ export interface Service {
   max_capacity: number;
   images: string[];
   is_active: boolean;
-  sort_order: number;
+  sort_order: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -69,7 +71,7 @@ export interface ServiceVariant {
   name: string;
   price: number;
   description: string | null;
-  sort_order: number;
+  sort_order: number | null;
   created_at: string;
 }
 
@@ -80,7 +82,7 @@ export interface ServiceAddon {
   price: number;
   description: string | null;
   is_active: boolean;
-  sort_order: number;
+  sort_order: number | null;
   created_at: string;
 }
 
@@ -147,13 +149,12 @@ export interface Payment {
   method: PaymentMethod | null;
   refund_amount: number | null;
   refund_reason: string | null;
-  metadata: Record<string, unknown> | null;
+  metadata: Json | null;
   created_at: string;
   updated_at: string;
 }
 
-// Database type for Supabase client
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       profiles: {
@@ -204,5 +205,17 @@ export interface Database {
         Update: Partial<Omit<Payment, "id" | "created_at" | "updated_at">>;
       };
     };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
-}
+};

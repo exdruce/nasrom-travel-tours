@@ -59,6 +59,7 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
               <Button
                 variant="ghost"
                 className="relative h-10 w-10 rounded-full"
+                suppressHydrationWarning
               >
                 <Avatar className="h-10 w-10">
                   <AvatarImage
