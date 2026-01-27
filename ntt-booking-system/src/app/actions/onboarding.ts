@@ -2,7 +2,6 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { businessSchema, serviceSchema } from "@/lib/schemas/onboarding";
-import { redirect } from "next/navigation";
 import type {
   BusinessFormValues,
   ServiceFormValues,
@@ -56,9 +55,23 @@ export async function createBusiness(data: BusinessFormValues) {
   return business;
 }
 
+interface VariantData {
+  name: string;
+  price: number;
+  description?: string;
+}
+
+interface AddonData {
+  name: string;
+  price: number;
+  description?: string;
+}
+
 export async function createFirstService(
   businessId: string,
   data: ServiceFormValues,
+  variants: VariantData[] = [],
+  addons: AddonData[] = [],
 ) {
   const supabase = await createClient();
   const {
@@ -87,20 +100,52 @@ export async function createFirstService(
   }
 
   // Create service
-  const { error } = await (supabase.from("services") as any).insert({
-    business_id: businessId,
-    name: validated.data.name,
-    description: validated.data.description || null,
-    price: validated.data.price,
-    duration_minutes: validated.data.duration_minutes,
-    max_capacity: validated.data.max_capacity,
-    images: [],
-    sort_order: 0,
-    is_active: true,
-  } as any);
+  const { data: service, error } = await (supabase.from("services") as any)
+    .insert({
+      business_id: businessId,
+      name: validated.data.name,
+      description: validated.data.description || null,
+      price: validated.data.price,
+      duration_minutes: validated.data.duration_minutes,
+      max_capacity: validated.data.max_capacity,
+      images: [],
+      sort_order: 0,
+      is_active: true,
+    } as any)
+    .select()
+    .single();
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  // Create variants if any
+  if (variants.length > 0 && service) {
+    for (let i = 0; i < variants.length; i++) {
+      const variant = variants[i];
+      await (supabase.from("service_variants") as any).insert({
+        service_id: service.id,
+        name: variant.name,
+        price: variant.price,
+        description: variant.description || null,
+        sort_order: i + 1,
+      } as any);
+    }
+  }
+
+  // Create add-ons if any
+  if (addons.length > 0 && service) {
+    for (let i = 0; i < addons.length; i++) {
+      const addon = addons[i];
+      await (supabase.from("service_addons") as any).insert({
+        service_id: service.id,
+        name: addon.name,
+        price: addon.price,
+        description: addon.description || null,
+        is_active: true,
+        sort_order: i + 1,
+      } as any);
+    }
   }
 
   // Publish business
@@ -108,5 +153,95 @@ export async function createFirstService(
     .update({ is_published: true } as any)
     .eq("id", businessId);
 
-  redirect("/dashboard");
+  return service;
+}
+
+export async function createAdditionalService(
+  businessId: string,
+  data: ServiceFormValues,
+  variants: VariantData[] = [],
+  addons: AddonData[] = [],
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  const validated = serviceSchema.safeParse(data);
+  if (!validated.success) {
+    throw new Error("Invalid data");
+  }
+
+  // Verify ownership
+  const { data: business } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("id", businessId)
+    .eq("owner_id", user.id)
+    .single();
+
+  if (!business) {
+    throw new Error("Unauthorized");
+  }
+
+  // Get next sort order
+  const { count } = await supabase
+    .from("services")
+    .select("*", { count: "exact", head: true })
+    .eq("business_id", businessId);
+
+  // Create service
+  const { data: service, error } = await (supabase.from("services") as any)
+    .insert({
+      business_id: businessId,
+      name: validated.data.name,
+      description: validated.data.description || null,
+      price: validated.data.price,
+      duration_minutes: validated.data.duration_minutes,
+      max_capacity: validated.data.max_capacity,
+      images: [],
+      sort_order: (count || 0) + 1,
+      is_active: true,
+    } as any)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  // Create variants if any
+  if (variants.length > 0 && service) {
+    for (let i = 0; i < variants.length; i++) {
+      const variant = variants[i];
+      await (supabase.from("service_variants") as any).insert({
+        service_id: service.id,
+        name: variant.name,
+        price: variant.price,
+        description: variant.description || null,
+        sort_order: i + 1,
+      } as any);
+    }
+  }
+
+  // Create add-ons if any
+  if (addons.length > 0 && service) {
+    for (let i = 0; i < addons.length; i++) {
+      const addon = addons[i];
+      await (supabase.from("service_addons") as any).insert({
+        service_id: service.id,
+        name: addon.name,
+        price: addon.price,
+        description: addon.description || null,
+        is_active: true,
+        sort_order: i + 1,
+      } as any);
+    }
+  }
+
+  return service;
 }

@@ -159,50 +159,174 @@ export type Database = {
     Tables: {
       profiles: {
         Row: Profile;
-        Insert: Omit<Profile, "created_at" | "updated_at">;
-        Update: Partial<Omit<Profile, "id" | "created_at" | "updated_at">>;
+        Insert: Partial<Profile> & Pick<Profile, "id" | "email">;
+        Update: Partial<Profile>;
+        Relationships: [];
       };
       businesses: {
         Row: Business;
-        Insert: Omit<Business, "id" | "created_at" | "updated_at">;
-        Update: Partial<Omit<Business, "id" | "created_at" | "updated_at">>;
+        Insert: Partial<Business> &
+          Pick<Business, "owner_id" | "name" | "slug">;
+        Update: Partial<Business>;
+        Relationships: [
+          {
+            foreignKeyName: "businesses_owner_id_fkey";
+            columns: ["owner_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       services: {
         Row: Service;
-        Insert: Omit<Service, "id" | "created_at" | "updated_at">;
-        Update: Partial<Omit<Service, "id" | "created_at" | "updated_at">>;
+        Insert: Partial<Service> &
+          Pick<
+            Service,
+            | "business_id"
+            | "name"
+            | "price"
+            | "duration_minutes"
+            | "max_capacity"
+          >;
+        Update: Partial<Service>;
+        Relationships: [
+          {
+            foreignKeyName: "services_business_id_fkey";
+            columns: ["business_id"];
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       service_variants: {
         Row: ServiceVariant;
-        Insert: Omit<ServiceVariant, "id" | "created_at">;
-        Update: Partial<Omit<ServiceVariant, "id" | "created_at">>;
+        Insert: Partial<ServiceVariant> &
+          Pick<ServiceVariant, "service_id" | "name" | "price">;
+        Update: Partial<ServiceVariant>;
+        Relationships: [
+          {
+            foreignKeyName: "service_variants_service_id_fkey";
+            columns: ["service_id"];
+            referencedRelation: "services";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       service_addons: {
         Row: ServiceAddon;
-        Insert: Omit<ServiceAddon, "id" | "created_at">;
-        Update: Partial<Omit<ServiceAddon, "id" | "created_at">>;
+        Insert: Partial<ServiceAddon> &
+          Pick<ServiceAddon, "service_id" | "name" | "price">;
+        Update: Partial<ServiceAddon>;
+        Relationships: [
+          {
+            foreignKeyName: "service_addons_service_id_fkey";
+            columns: ["service_id"];
+            referencedRelation: "services";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       availability: {
         Row: Availability;
-        Insert: Omit<Availability, "id" | "created_at" | "updated_at">;
-        Update: Partial<Omit<Availability, "id" | "created_at" | "updated_at">>;
+        Insert: Partial<Availability> &
+          Pick<
+            Availability,
+            "business_id" | "date" | "start_time" | "end_time" | "capacity"
+          >;
+        Update: Partial<Availability>;
+        Relationships: [
+          {
+            foreignKeyName: "availability_business_id_fkey";
+            columns: ["business_id"];
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "availability_service_id_fkey";
+            columns: ["service_id"];
+            referencedRelation: "services";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       bookings: {
         Row: Booking;
-        Insert: Omit<Booking, "id" | "ref_code" | "created_at" | "updated_at">;
-        Update: Partial<
-          Omit<Booking, "id" | "ref_code" | "created_at" | "updated_at">
-        >;
+        Insert: Partial<Booking> &
+          Pick<
+            Booking,
+            | "business_id"
+            | "service_id"
+            | "customer_name"
+            | "customer_email"
+            | "booking_date"
+            | "start_time"
+            | "pax"
+            | "subtotal"
+            | "total_amount"
+          >;
+        Update: Partial<Booking>;
+        Relationships: [
+          {
+            foreignKeyName: "bookings_business_id_fkey";
+            columns: ["business_id"];
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bookings_service_id_fkey";
+            columns: ["service_id"];
+            referencedRelation: "services";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bookings_customer_id_fkey";
+            columns: ["customer_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bookings_availability_id_fkey";
+            columns: ["availability_id"];
+            referencedRelation: "availability";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       booking_items: {
         Row: BookingItem;
-        Insert: Omit<BookingItem, "id" | "created_at">;
-        Update: Partial<Omit<BookingItem, "id" | "created_at">>;
+        Insert: Partial<BookingItem> &
+          Pick<
+            BookingItem,
+            | "booking_id"
+            | "type"
+            | "item_id"
+            | "name"
+            | "quantity"
+            | "unit_price"
+            | "total_price"
+          >;
+        Update: Partial<BookingItem>;
+        Relationships: [
+          {
+            foreignKeyName: "booking_items_booking_id_fkey";
+            columns: ["booking_id"];
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       payments: {
         Row: Payment;
-        Insert: Omit<Payment, "id" | "created_at" | "updated_at">;
-        Update: Partial<Omit<Payment, "id" | "created_at" | "updated_at">>;
+        Insert: Partial<Payment> & Pick<Payment, "booking_id" | "amount">;
+        Update: Partial<Payment>;
+        Relationships: [
+          {
+            foreignKeyName: "payments_booking_id_fkey";
+            columns: ["booking_id"];
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: {
