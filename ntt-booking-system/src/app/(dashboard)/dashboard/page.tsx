@@ -193,7 +193,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Booking URL Card - Prominent */}
-      <Card className="border-2 border-teal-200 bg-gradient-to-r from-teal-50 to-cyan-50">
+      <Card className="border-2 border-teal-200 bg-linear-to-r from-teal-50 to-cyan-50">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-start gap-4">

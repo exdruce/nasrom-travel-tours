@@ -7,9 +7,11 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <div className="max-w-md w-full text-center space-y-8">
-        <div className="mx-auto w-20 h-20 bg-linear-to-br from-teal-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg">
-          <span className="text-white font-bold text-4xl">N</span>
-        </div>
+        <img
+          src="/logo.svg"
+          alt="NTT Booking"
+          className="mx-auto w-20 h-20 shadow-lg rounded-2xl"
+        />
 
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-gray-900">

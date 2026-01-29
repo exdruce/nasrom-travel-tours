@@ -30,9 +30,11 @@ export default async function OnboardingLayout({
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-2xl">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 w-12 h-12 bg-linear-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
-            <span className="text-white font-bold text-xl">N</span>
-          </div>
+          <img
+            src="/logo.svg"
+            alt="NTT Booking"
+            className="mx-auto mb-4 w-12 h-12"
+          />
           <h1 className="text-2xl font-bold text-gray-900">
             Welcome to NTT Booking
           </h1>

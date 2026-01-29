@@ -46,9 +46,7 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
       <div className="flex items-center justify-between h-full px-4 lg:px-8">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-linear-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">N</span>
-            </div>
+            <img src="/logo.svg" alt="NTT Booking" className="w-8 h-8" />
             <span className="font-bold text-lg text-gray-900">NTT Booking</span>
           </div>
         </div>

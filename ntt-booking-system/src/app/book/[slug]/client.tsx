@@ -344,12 +344,11 @@ export function BookingPageClient({
                 className="rounded-lg"
               />
             ) : (
-              <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
-                style={{ backgroundColor: primaryColor }}
-              >
-                {business.name[0]}
-              </div>
+              <img
+                src="/logo.svg"
+                alt={business.name}
+                className="w-10 h-10 rounded-lg"
+              />
             )}
             <div>
               <h1 className="font-bold text-lg">{business.name}</h1>
