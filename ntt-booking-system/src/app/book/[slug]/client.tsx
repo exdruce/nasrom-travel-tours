@@ -364,6 +364,15 @@ export function BookingPageClient({
         startTime: selectedSlot.start_time,
         pax: totalPax,
         items,
+        passengers: passengers.map((p) => ({
+          full_name: p.fullName,
+          ic_passport: p.icPassport,
+          dob: p.dob || null,
+          calculated_age: p.calculatedAge,
+          gender: p.gender,
+          nationality: p.nationality,
+          passenger_type: p.passengerType,
+        })),
         subtotal: totals.subtotal,
         addonsTotal: totals.addonsTotal,
         totalAmount: totals.total,
@@ -452,7 +461,7 @@ export function BookingPageClient({
               />
             )}
             <div>
-              <h1 className="font-bold text-lg">{business.name}</h1>
+              <h1 className="font-serif font-bold text-xl">{business.name}</h1>
               <p className="text-sm text-gray-500">Book your experience</p>
             </div>
           </div>
@@ -513,7 +522,9 @@ export function BookingPageClient({
         {currentStep === "service" && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold">Select a Service</h2>
+              <h2 className="font-serif text-3xl font-bold text-primary">
+                Select a Service
+              </h2>
               <p className="text-gray-500">
                 Choose the experience you want to book
               </p>
@@ -549,7 +560,7 @@ export function BookingPageClient({
                         )}
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-lg">
+                        <h3 className="font-serif font-semibold text-xl text-primary">
                           {service.name}
                         </h3>
                         {service.description && (
@@ -593,7 +604,9 @@ export function BookingPageClient({
             </Button>
 
             <div>
-              <h2 className="text-2xl font-bold">Choose Date & Time</h2>
+              <h2 className="font-serif text-3xl font-bold text-primary">
+                Choose Date & Time
+              </h2>
               <p className="text-gray-500">
                 Select when you want to book {selectedService.name}
               </p>

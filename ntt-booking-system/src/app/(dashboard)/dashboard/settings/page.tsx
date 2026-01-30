@@ -10,6 +10,13 @@ export default async function SettingsPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Get profile data
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
   // Get business data
   const { data: business } = await supabase
     .from("businesses")
@@ -19,5 +26,5 @@ export default async function SettingsPage() {
 
   if (!business) redirect("/onboarding");
 
-  return <SettingsPageClient business={business} />;
+  return <SettingsPageClient business={business} profile={profile} />;
 }

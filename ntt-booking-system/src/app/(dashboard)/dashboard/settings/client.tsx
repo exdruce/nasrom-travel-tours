@@ -26,26 +26,37 @@ import {
   Rocket,
   EyeOff,
   Settings2,
+  User,
 } from "lucide-react";
 import { toast } from "sonner";
 import { updateBusiness, toggleBusinessPublish } from "@/app/actions/settings";
 import { ConfigurationSection } from "@/components/settings/ConfigurationSection";
-import type { Business } from "@/types";
+import { updateProfile } from "@/app/actions/user";
+import type { Business, Profile } from "@/types";
 
 interface SettingsPageClientProps {
   business: Business;
+  profile: Profile | null;
 }
 
-export function SettingsPageClient({ business }: SettingsPageClientProps) {
+export function SettingsPageClient({
+  business,
+  profile,
+}: SettingsPageClientProps) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isPublished, setIsPublished] = useState(business.is_published);
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<"profile" | "configuration">(
-    "profile",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "profile" | "configuration" | "user"
+  >("profile");
+  const [profileFormData, setProfileFormData] = useState({
+    full_name: profile?.full_name || "",
+    phone: profile?.phone || "",
+    avatar_url: profile?.avatar_url || "",
+  });
   const [formData, setFormData] = useState({
     name: business.name,
     slug: business.slug,
@@ -147,7 +158,7 @@ export function SettingsPageClient({ business }: SettingsPageClientProps) {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-2 border-b pb-2">
+      <div className="flex gap-2 border-b pb-2 overflow-x-auto">
         <Button
           variant={activeTab === "profile" ? "default" : "ghost"}
           size="sm"
@@ -155,6 +166,14 @@ export function SettingsPageClient({ business }: SettingsPageClientProps) {
         >
           <Building2 className="h-4 w-4 mr-2" />
           Business Profile
+        </Button>
+        <Button
+          variant={activeTab === "user" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setActiveTab("user")}
+        >
+          <User className="h-4 w-4 mr-2" />
+          User Profile
         </Button>
         <Button
           variant={activeTab === "configuration" ? "default" : "ghost"}
@@ -464,6 +483,90 @@ export function SettingsPageClient({ business }: SettingsPageClientProps) {
       {/* Configuration Tab */}
       {activeTab === "configuration" && (
         <ConfigurationSection businessId={business.id} />
+      )}
+
+      {/* User Profile Tab */}
+      {activeTab === "user" && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Personal Information
+              </CardTitle>
+              <CardDescription>Update your personal details</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Full Name</Label>
+                  <Input
+                    value={profileFormData.full_name}
+                    onChange={(e) =>
+                      setProfileFormData({
+                        ...profileFormData,
+                        full_name: e.target.value,
+                      })
+                    }
+                    placeholder="Your Full Name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Phone Number</Label>
+                  <Input
+                    value={profileFormData.phone}
+                    onChange={(e) =>
+                      setProfileFormData({
+                        ...profileFormData,
+                        phone: e.target.value,
+                      })
+                    }
+                    placeholder="Your Phone Number"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Email Address</Label>
+                <Input
+                  value={profile?.email || ""}
+                  disabled
+                  className="bg-gray-100"
+                />
+                <p className="text-xs text-gray-500">
+                  Email cannot be changed directly. Contact support if needed.
+                </p>
+              </div>
+
+              <div className="pt-4 flex justify-end">
+                <Button
+                  onClick={async () => {
+                    setIsSaving(true);
+                    try {
+                      if (!profile) return;
+                      const result = await updateProfile(
+                        profile.id,
+                        profileFormData,
+                      );
+                      if (result.error) {
+                        toast.error(result.error);
+                      } else {
+                        toast.success("Profile updated successfully");
+                      }
+                    } catch {
+                      toast.error("Failed to update profile");
+                    } finally {
+                      setIsSaving(false);
+                    }
+                  }}
+                  disabled={isSaving}
+                >
+                  {isSaving ? "Saving..." : "Update Profile"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );

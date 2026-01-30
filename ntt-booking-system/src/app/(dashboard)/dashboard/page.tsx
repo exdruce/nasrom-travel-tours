@@ -180,7 +180,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="font-serif text-4xl font-bold text-primary">
           Welcome back,{" "}
           {(profile as { full_name?: string | null } | null)?.full_name?.split(
             " ",
@@ -193,7 +193,8 @@ export default async function DashboardPage() {
       </div>
 
       {/* Booking URL Card - Prominent */}
-      <Card className="border-2 border-teal-200 bg-linear-to-r from-teal-50 to-cyan-50">
+      <Card className="border-2 border-primary/20 bg-linear-to-r from-primary/5 to-secondary/20 overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-3xl -mr-16 -mt-16" />
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-start gap-4">
