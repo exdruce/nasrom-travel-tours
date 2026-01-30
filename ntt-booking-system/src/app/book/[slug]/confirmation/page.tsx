@@ -11,11 +11,13 @@ import {
   Phone,
   Mail,
   Download,
+  AlertCircle,
+  Timer,
 } from "lucide-react";
 
 interface ConfirmationPageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ ref?: string }>;
+  searchParams: Promise<{ ref?: string; payment?: string }>;
 }
 
 export default async function ConfirmationPage({
@@ -23,7 +25,7 @@ export default async function ConfirmationPage({
   searchParams,
 }: ConfirmationPageProps) {
   const { slug } = await params;
-  const { ref } = await searchParams;
+  const { ref, payment } = await searchParams;
 
   if (!ref) {
     notFound();
@@ -95,15 +97,62 @@ export default async function ConfirmationPage({
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-12">
+        {/* Payment Status Banner */}
+        {payment === "success" && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            <div>
+              <p className="font-medium text-green-800">Payment Successful</p>
+              <p className="text-sm text-green-600">
+                Your payment has been processed successfully.
+              </p>
+            </div>
+          </div>
+        )}
+        {payment === "pending" && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-3">
+            <Timer className="h-5 w-5 text-yellow-600" />
+            <div>
+              <p className="font-medium text-yellow-800">Payment Pending</p>
+              <p className="text-sm text-yellow-600">
+                Your payment is being processed. We'll notify you once
+                confirmed.
+              </p>
+            </div>
+          </div>
+        )}
+        {payment === "failed" && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-red-600" />
+            <div>
+              <p className="font-medium text-red-800">Payment Failed</p>
+              <p className="text-sm text-red-600">
+                Your payment could not be processed. Please contact us for
+                assistance.
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
             <CheckCircle className="h-10 w-10 text-green-600" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900">
-            Booking Confirmed!
+            {payment === "success"
+              ? "Booking Confirmed!"
+              : payment === "pending"
+                ? "Booking Received!"
+                : payment === "failed"
+                  ? "Booking Pending Payment"
+                  : "Booking Confirmed!"}
           </h1>
           <p className="text-gray-500 mt-2">
-            Your booking has been successfully submitted
+            {payment === "pending"
+              ? "Your booking is pending payment confirmation"
+              : payment === "failed"
+                ? "Please complete your payment to confirm booking"
+                : "Your booking has been successfully submitted"}
           </p>
         </div>
 

@@ -34,6 +34,10 @@ import {
   Phone,
   Mail,
   User,
+  CreditCard,
+  Wallet,
+  Building2,
+  QrCode,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -68,7 +72,45 @@ interface SelectedAddon {
   quantity: number;
 }
 
-type BookingStep = "service" | "datetime" | "details" | "review";
+type BookingStep = "service" | "datetime" | "details" | "review" | "payment";
+
+type PaymentMethod =
+  | "FPX"
+  | "FPX_LINE_OF_CREDIT"
+  | "DUITNOW_DOBW"
+  | "DUITNOW_QR";
+
+const PAYMENT_METHODS: {
+  id: PaymentMethod;
+  label: string;
+  icon: React.ReactNode;
+  description: string;
+}[] = [
+  {
+    id: "FPX",
+    label: "Online Banking (FPX)",
+    icon: <Building2 className="h-5 w-5" />,
+    description: "Pay via Malaysian bank",
+  },
+  {
+    id: "FPX_LINE_OF_CREDIT",
+    label: "FPX Line of Credit",
+    icon: <CreditCard className="h-5 w-5" />,
+    description: "Credit line via FPX",
+  },
+  {
+    id: "DUITNOW_DOBW",
+    label: "DuitNow Online Banking",
+    icon: <Building2 className="h-5 w-5" />,
+    description: "Pay with DuitNow via bank",
+  },
+  {
+    id: "DUITNOW_QR",
+    label: "DuitNow QR",
+    icon: <QrCode className="h-5 w-5" />,
+    description: "Scan & pay with any bank app",
+  },
+];
 
 export function BookingPageClient({
   business,
@@ -96,7 +138,10 @@ export function BookingPageClient({
     phone: "",
     notes: "",
   });
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<PaymentMethod | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookingId, setBookingId] = useState<string | null>(null);
 
   // Get branding colors
   const branding = business.branding as {
@@ -241,8 +286,15 @@ export function BookingPageClient({
     setCurrentStep("review");
   };
 
+  const handleProceedToPayment = () => {
+    setCurrentStep("payment");
+  };
+
   const handleSubmitBooking = async () => {
-    if (!selectedService || !selectedSlot) return;
+    if (!selectedService || !selectedSlot || !selectedPaymentMethod) {
+      toast.error("Please select a payment method");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -278,6 +330,7 @@ export function BookingPageClient({
         }
       }
 
+      // Step 1: Create the booking
       const result = await createBooking({
         businessId: business.id,
         serviceId: selectedService.id,
@@ -305,8 +358,30 @@ export function BookingPageClient({
         return;
       }
 
-      toast.success("Booking confirmed!");
-      router.push(`/book/${business.slug}/confirmation?ref=${result.refCode}`);
+      // Step 2: Create payment intent and redirect to Bayarcash
+      const paymentResponse = await fetch("/api/bayarcash/create-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId: result.bookingId,
+          paymentChannel: selectedPaymentMethod,
+        }),
+      });
+
+      const paymentData = await paymentResponse.json();
+
+      if (!paymentResponse.ok || !paymentData.success) {
+        toast.error(paymentData.error || "Failed to initialize payment");
+        // Still redirect to confirmation with pending status
+        router.push(
+          `/book/${business.slug}/confirmation?ref=${result.refCode}&payment=pending`,
+        );
+        return;
+      }
+
+      // Redirect to Bayarcash checkout
+      toast.success("Redirecting to payment...");
+      window.location.href = paymentData.checkoutUrl;
     } catch (error) {
       toast.error("Failed to submit booking. Please try again.");
     } finally {
@@ -318,6 +393,7 @@ export function BookingPageClient({
     if (currentStep === "datetime") setCurrentStep("service");
     else if (currentStep === "details") setCurrentStep("datetime");
     else if (currentStep === "review") setCurrentStep("details");
+    else if (currentStep === "payment") setCurrentStep("review");
   };
 
   const steps = [
@@ -325,6 +401,7 @@ export function BookingPageClient({
     { id: "datetime", label: "Date & Time" },
     { id: "details", label: "Details" },
     { id: "review", label: "Review" },
+    { id: "payment", label: "Payment" },
   ];
 
   const currentStepIndex = steps.findIndex((s) => s.id === currentStep);
@@ -992,8 +1069,111 @@ export function BookingPageClient({
             <Button
               size="lg"
               className="w-full"
+              onClick={handleProceedToPayment}
+              style={{ backgroundColor: primaryColor }}
+            >
+              Continue to Payment
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        )}
+
+        {/* Step 5: Payment Method Selection */}
+        {currentStep === "payment" && selectedService && selectedSlot && (
+          <div className="space-y-6">
+            <Button variant="ghost" onClick={goBack} className="mb-2">
+              <ChevronLeft className="h-4 w-4 mr-1" /> Back
+            </Button>
+
+            <div>
+              <h2 className="text-2xl font-bold">Select Payment Method</h2>
+              <p className="text-gray-500">Choose how you would like to pay</p>
+            </div>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="space-y-3">
+                  {PAYMENT_METHODS.map((method) => {
+                    const isSelected = selectedPaymentMethod === method.id;
+                    return (
+                      <button
+                        key={method.id}
+                        onClick={() => setSelectedPaymentMethod(method.id)}
+                        className={cn(
+                          "w-full flex items-center gap-4 p-4 border rounded-lg text-left transition-all",
+                          isSelected ? "border-2" : "hover:bg-gray-50",
+                        )}
+                        style={
+                          isSelected
+                            ? {
+                                borderColor: primaryColor,
+                                backgroundColor: `${primaryColor}10`,
+                              }
+                            : {}
+                        }
+                      >
+                        <div
+                          className={cn(
+                            "w-10 h-10 rounded-full flex items-center justify-center",
+                            isSelected
+                              ? "text-white"
+                              : "bg-gray-100 text-gray-600",
+                          )}
+                          style={
+                            isSelected ? { backgroundColor: primaryColor } : {}
+                          }
+                        >
+                          {method.icon}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium">{method.label}</div>
+                          <div className="text-sm text-gray-500">
+                            {method.description}
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <Check
+                            className="h-5 w-5"
+                            style={{ color: primaryColor }}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Order Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Order Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>{selectedService.name}</span>
+                  <span>{formatPrice(totals.subtotal)}</span>
+                </div>
+                {totals.addonsTotal > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span>Add-ons</span>
+                    <span>{formatPrice(totals.addonsTotal)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-lg pt-2 border-t">
+                  <span>Total</span>
+                  <span style={{ color: primaryColor }}>
+                    {formatPrice(totals.total)}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Button
+              size="lg"
+              className="w-full"
               onClick={handleSubmitBooking}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !selectedPaymentMethod}
               style={{ backgroundColor: primaryColor }}
             >
               {isSubmitting ? (
@@ -1002,9 +1182,13 @@ export function BookingPageClient({
                   Processing...
                 </>
               ) : (
-                <>Confirm & Pay {formatPrice(totals.total)}</>
+                <>Pay {formatPrice(totals.total)}</>
               )}
             </Button>
+
+            <p className="text-center text-sm text-gray-500">
+              You will be redirected to complete your payment securely
+            </p>
           </div>
         )}
       </main>

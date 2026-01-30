@@ -36,6 +36,17 @@ import {
   Tags,
   Gift,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { Service, ServiceVariant, ServiceAddon } from "@/types";
 
 interface ServiceFormProps {
@@ -121,22 +132,35 @@ export function ServiceForm({
 
   const handleUpdateVariant = (variantId: string, formData: FormData) => {
     const name = formData.get("name") as string;
-    const price = parseFloat(formData.get("price") as string);
+    const priceStr = formData.get("price") as string;
+    const price = parseFloat(priceStr);
     const description = formData.get("description") as string;
 
+    // Validate required fields
+    if (!name || !name.trim()) {
+      alert("Variant name is required");
+      return;
+    }
+    if (!priceStr || isNaN(price) || price < 0) {
+      alert("Valid price is required");
+      return;
+    }
+
     startTransition(async () => {
-      await updateVariant(variantId, { name, price, description });
+      await updateVariant(variantId, {
+        name: name.trim(),
+        price,
+        description: description?.trim() || undefined,
+      });
       setEditingVariantId(null);
     });
   };
 
   const handleDeleteVariant = (variantId: string) => {
     if (!service?.id) return;
-    if (confirm("Delete this variant?")) {
-      startTransition(async () => {
-        await deleteVariant(variantId, service.id);
-      });
-    }
+    startTransition(async () => {
+      await deleteVariant(variantId, service.id);
+    });
   };
 
   // Addon handlers
@@ -157,22 +181,35 @@ export function ServiceForm({
 
   const handleUpdateAddon = (addonId: string, formData: FormData) => {
     const name = formData.get("name") as string;
-    const price = parseFloat(formData.get("price") as string);
+    const priceStr = formData.get("price") as string;
+    const price = parseFloat(priceStr);
     const description = formData.get("description") as string;
 
+    // Validate required fields
+    if (!name || !name.trim()) {
+      alert("Add-on name is required");
+      return;
+    }
+    if (!priceStr || isNaN(price) || price < 0) {
+      alert("Valid price is required");
+      return;
+    }
+
     startTransition(async () => {
-      await updateAddon(addonId, { name, price, description });
+      await updateAddon(addonId, {
+        name: name.trim(),
+        price,
+        description: description?.trim() || undefined,
+      });
       setEditingAddonId(null);
     });
   };
 
   const handleDeleteAddon = (addonId: string) => {
     if (!service?.id) return;
-    if (confirm("Delete this add-on?")) {
-      startTransition(async () => {
-        await deleteAddon(addonId, service.id);
-      });
-    }
+    startTransition(async () => {
+      await deleteAddon(addonId, service.id);
+    });
   };
 
   return (
@@ -238,44 +275,21 @@ export function ServiceForm({
           </CardContent>
         </Card>
 
-        {/* Pricing, Variants & Capacity */}
+        {/* Capacity & Duration */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Pricing & Capacity
+              <Users className="h-5 w-5" />
+              Capacity & Duration
             </CardTitle>
             <CardDescription>
-              Set base pricing and add variants for different customer types
+              Set the maximum capacity and duration for this service. Pricing is
+              set per variant below (Adult, Child, Senior, etc.)
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Base Pricing Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="price">Base Price (RM) *</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                    RM
-                  </span>
-                  <Input
-                    id="price"
-                    name="price"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    className={`pl-12 ${state?.errors?.price ? "border-red-500" : ""}`}
-                    defaultValue={service?.price || ""}
-                  />
-                </div>
-                {state?.errors?.price && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {state.errors.price.join(", ")}
-                  </p>
-                )}
-              </div>
-
+            {/* Duration & Capacity Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="duration_minutes">Duration (minutes)</Label>
                 <div className="relative">
@@ -320,7 +334,7 @@ export function ServiceForm({
               </div>
             </div>
 
-            {/* Price Variants Section */}
+            {/* Price Variants Section - only show when editing */}
             {isEdit && (
               <div className="border-t pt-6 space-y-4">
                 <div className="flex items-center justify-between">
@@ -355,16 +369,11 @@ export function ServiceForm({
                         className="flex items-center justify-between p-3 bg-blue-50 rounded-lg"
                       >
                         {editingVariantId === variant.id ? (
-                          <form
-                            action={(formData) =>
-                              handleUpdateVariant(variant.id, formData)
-                            }
-                            className="flex-1 grid grid-cols-4 gap-3 items-end"
-                          >
+                          <div className="flex-1 grid grid-cols-4 gap-3 items-end">
                             <div>
                               <Label className="text-xs">Name</Label>
                               <Input
-                                name="name"
+                                id={`variant-name-${variant.id}`}
                                 defaultValue={variant.name}
                                 required
                               />
@@ -372,7 +381,7 @@ export function ServiceForm({
                             <div>
                               <Label className="text-xs">Price (RM)</Label>
                               <Input
-                                name="price"
+                                id={`variant-price-${variant.id}`}
                                 type="number"
                                 step="0.01"
                                 min="0"
@@ -383,16 +392,41 @@ export function ServiceForm({
                             <div>
                               <Label className="text-xs">Description</Label>
                               <Input
-                                name="description"
+                                id={`variant-description-${variant.id}`}
                                 defaultValue={variant.description || ""}
                                 placeholder="e.g., Ages 12+"
                               />
                             </div>
                             <div className="flex gap-2">
                               <Button
-                                type="submit"
+                                type="button"
                                 size="sm"
                                 disabled={isPending}
+                                onClick={() => {
+                                  const formData = new FormData();
+                                  const nameInput = document.getElementById(
+                                    `variant-name-${variant.id}`,
+                                  ) as HTMLInputElement;
+                                  const priceInput = document.getElementById(
+                                    `variant-price-${variant.id}`,
+                                  ) as HTMLInputElement;
+                                  const descInput = document.getElementById(
+                                    `variant-description-${variant.id}`,
+                                  ) as HTMLInputElement;
+                                  formData.append(
+                                    "name",
+                                    nameInput?.value || "",
+                                  );
+                                  formData.append(
+                                    "price",
+                                    priceInput?.value || "",
+                                  );
+                                  formData.append(
+                                    "description",
+                                    descInput?.value || "",
+                                  );
+                                  handleUpdateVariant(variant.id, formData);
+                                }}
                               >
                                 {isPending && (
                                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -408,7 +442,7 @@ export function ServiceForm({
                                 Cancel
                               </Button>
                             </div>
-                          </form>
+                          </div>
                         ) : (
                           <>
                             <div className="flex items-center gap-4">
@@ -431,24 +465,58 @@ export function ServiceForm({
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8"
-                                  onClick={() =>
-                                    setEditingVariantId(variant.id)
-                                  }
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setEditingVariantId(variant.id);
+                                  }}
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-red-600 hover:text-red-700"
-                                  onClick={() =>
-                                    handleDeleteVariant(variant.id)
-                                  }
-                                  disabled={isPending}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-red-600 hover:text-red-700"
+                                      disabled={isPending}
+                                      onClick={(e) => {
+                                        // Stop propagation so we don't trigger parent clicks or form submission
+                                        // But DO NOT preventDefault, because AlertDialogTrigger needs the click
+                                        e.stopPropagation();
+                                      }}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Delete Variant?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This will permanently delete the variant
+                                        "{variant.name}". This action cannot be
+                                        undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Cancel
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeleteVariant(variant.id);
+                                        }}
+                                        className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                                      >
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
                               </div>
                             </div>
                           </>
@@ -562,7 +630,7 @@ export function ServiceForm({
               </div>
             )}
 
-            {/* Add-ons Section */}
+            {/* Add-ons Section - only show when editing */}
             {isEdit && (
               <div className="border-t pt-6 space-y-4">
                 <div className="flex items-center justify-between">
@@ -597,16 +665,11 @@ export function ServiceForm({
                         }`}
                       >
                         {editingAddonId === addon.id ? (
-                          <form
-                            action={(formData) =>
-                              handleUpdateAddon(addon.id, formData)
-                            }
-                            className="flex-1 grid grid-cols-3 gap-3 items-end"
-                          >
+                          <div className="flex-1 grid grid-cols-3 gap-3 items-end">
                             <div>
                               <Label className="text-xs">Name</Label>
                               <Input
-                                name="name"
+                                id={`addon-name-${addon.id}`}
                                 defaultValue={addon.name}
                                 required
                               />
@@ -614,7 +677,7 @@ export function ServiceForm({
                             <div>
                               <Label className="text-xs">Price (RM)</Label>
                               <Input
-                                name="price"
+                                id={`addon-price-${addon.id}`}
                                 type="number"
                                 step="0.01"
                                 min="0"
@@ -624,14 +687,39 @@ export function ServiceForm({
                             </div>
                             <div className="flex gap-2">
                               <Input
-                                name="description"
+                                id={`addon-description-${addon.id}`}
                                 defaultValue={addon.description || ""}
                                 placeholder="Description"
                               />
                               <Button
-                                type="submit"
+                                type="button"
                                 size="sm"
                                 disabled={isPending}
+                                onClick={() => {
+                                  const formData = new FormData();
+                                  const nameInput = document.getElementById(
+                                    `addon-name-${addon.id}`,
+                                  ) as HTMLInputElement;
+                                  const priceInput = document.getElementById(
+                                    `addon-price-${addon.id}`,
+                                  ) as HTMLInputElement;
+                                  const descInput = document.getElementById(
+                                    `addon-description-${addon.id}`,
+                                  ) as HTMLInputElement;
+                                  formData.append(
+                                    "name",
+                                    nameInput?.value || "",
+                                  );
+                                  formData.append(
+                                    "price",
+                                    priceInput?.value || "",
+                                  );
+                                  formData.append(
+                                    "description",
+                                    descInput?.value || "",
+                                  );
+                                  handleUpdateAddon(addon.id, formData);
+                                }}
                               >
                                 {isPending && (
                                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -647,7 +735,7 @@ export function ServiceForm({
                                 Cancel
                               </Button>
                             </div>
-                          </form>
+                          </div>
                         ) : (
                           <>
                             <div className="flex items-center gap-3">
@@ -675,20 +763,56 @@ export function ServiceForm({
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8"
-                                  onClick={() => setEditingAddonId(addon.id)}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setEditingAddonId(addon.id);
+                                  }}
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-red-600 hover:text-red-700"
-                                  onClick={() => handleDeleteAddon(addon.id)}
-                                  disabled={isPending}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-red-600 hover:text-red-700"
+                                      disabled={isPending}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                      }}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Delete Add-on?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This will permanently delete the add-on
+                                        "{addon.name}". This action cannot be
+                                        undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Cancel
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeleteAddon(addon.id);
+                                        }}
+                                        className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                                      >
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
                               </div>
                             </div>
                           </>

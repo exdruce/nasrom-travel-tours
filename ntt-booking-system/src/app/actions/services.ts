@@ -9,7 +9,11 @@ import { z } from "zod";
 const serviceSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   description: z.string().optional(),
-  price: z.coerce.number().min(0, "Price must be positive"),
+  price: z.coerce
+    .number()
+    .min(0, "Price must be positive")
+    .optional()
+    .default(0), // Price is now per variant
   duration_minutes: z.coerce
     .number()
     .min(0, "Duration must be a positive number")
@@ -63,7 +67,7 @@ export async function createService(
   const rawData = {
     name: formData.get("name"),
     description: formData.get("description") || "",
-    price: formData.get("price"),
+    price: formData.get("price") || 0, // Price is optional, defaults to 0 (pricing is per variant)
     duration_minutes: formData.get("duration_minutes"),
     max_capacity: formData.get("max_capacity"),
     is_active: formData.get("is_active") === "true",
@@ -133,7 +137,7 @@ export async function updateService(
   const rawData = {
     name: formData.get("name"),
     description: formData.get("description") || "",
-    price: formData.get("price"),
+    price: formData.get("price") || 0, // Price is optional, defaults to 0 (pricing is per variant)
     duration_minutes: formData.get("duration_minutes"),
     max_capacity: formData.get("max_capacity"),
     is_active: formData.get("is_active") === "true",

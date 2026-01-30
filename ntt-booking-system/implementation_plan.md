@@ -35,4 +35,8 @@ Visual overview of schedule.
 ## 5. Polish & Integration
 
 - [ ] **Emails**: Confirmation emails (using Resend or Supabase Auth SMTP).
-- [ ] **Payments**: (Optional) Integration with payment gateway if required later.
+- [x] **Phase 7: Payments**: Integrated Bayarcash Payment Gateway (FPX).
+  - [x] Payment Intent creation
+  - [x] Return URL handling (POST/GET)
+  - [x] Webhook/Callback simulation for localhost
+  - [x] Status synchronization

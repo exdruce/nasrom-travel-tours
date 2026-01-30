@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 
@@ -21,7 +21,7 @@ const createBookingSchema = z.object({
   customerEmail: z.string().email("Invalid email"),
   customerPhone: z.string().min(1, "Phone is required"),
   bookingDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  startTime: z.string().regex(/^\d{2}:\d{2}$/),
+  startTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/),
   pax: z.number().min(1),
   items: z.array(bookingItemSchema),
   subtotal: z.number().min(0),
@@ -43,7 +43,7 @@ function generateRefCode(): string {
 }
 
 export async function createBooking(input: CreateBookingInput) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Validate input
   const validated = createBookingSchema.safeParse(input);
@@ -153,7 +153,7 @@ export async function createBooking(input: CreateBookingInput) {
 }
 
 export async function getBookingByRef(refCode: string) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("bookings")
@@ -175,7 +175,7 @@ export async function getBookingByRef(refCode: string) {
 }
 
 export async function cancelBooking(bookingId: string, reason?: string) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get booking to check availability
   const { data: booking } = await supabase
