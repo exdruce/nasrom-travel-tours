@@ -2,5 +2,7 @@
   "deno.enable": false,
   "deno.enablePaths": ["supabase/functions"],
   "deno.lint": true,
-  "deno.unstable": []
+  "deno.unstable": [],
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore"
 }

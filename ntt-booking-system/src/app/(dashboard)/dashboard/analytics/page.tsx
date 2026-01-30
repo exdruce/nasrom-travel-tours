@@ -1,13 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TrendingUp, Users, Calendar, DollarSign } from "lucide-react";
 import {
-  TrendingUp,
-  Users,
-  Calendar,
-  DollarSign,
-  BarChart3,
-} from "lucide-react";
+  ChartAreaInteractive,
+  ChartDataPoint,
+} from "@/components/chart-area-interactive";
 
 export default async function AnalyticsPage() {
   const supabase = await createClient();
@@ -77,6 +75,50 @@ export default async function AnalyticsPage() {
     .select("*", { count: "exact", head: true })
     .eq("business_id", business.id)
     .eq("is_active", true);
+
+  // ========== Chart Data: Daily aggregates for the last 90 days ==========
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+  const startDate = ninetyDaysAgo.toISOString().split("T")[0];
+
+  const { data: dailyBookingsRaw } = await supabase
+    .from("bookings")
+    .select("booking_date, total_amount, status")
+    .eq("business_id", business.id)
+    .gte("booking_date", startDate)
+    .order("booking_date", { ascending: true });
+
+  // Type assertion for daily bookings
+  const dailyBookings = (dailyBookingsRaw || []) as {
+    booking_date: string;
+    total_amount: number | null;
+    status: string;
+  }[];
+
+  // Aggregate by date
+  const dailyAggregates: Record<string, { revenue: number; bookings: number }> =
+    {};
+
+  for (const booking of dailyBookings) {
+    const date = booking.booking_date;
+    if (!dailyAggregates[date]) {
+      dailyAggregates[date] = { revenue: 0, bookings: 0 };
+    }
+    dailyAggregates[date].bookings += 1;
+    // Only count revenue from confirmed/completed bookings
+    if (booking.status === "confirmed" || booking.status === "completed") {
+      dailyAggregates[date].revenue += booking.total_amount || 0;
+    }
+  }
+
+  // Convert to array for the chart
+  const chartData: ChartDataPoint[] = Object.entries(dailyAggregates)
+    .map(([date, values]) => ({
+      date,
+      revenue: values.revenue,
+      bookings: values.bookings,
+    }))
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat("ms-MY", {
@@ -150,27 +192,10 @@ export default async function AnalyticsPage() {
         </Card>
       </div>
 
-      {/* Coming Soon Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
-            Detailed Analytics
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <BarChart3 className="h-16 w-16 text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Coming Soon
-            </h3>
-            <p className="text-gray-500 max-w-md">
-              Advanced analytics including revenue charts, booking trends,
-              popular services, and customer insights will be available here.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Interactive Chart Section */}
+      <div className="w-full">
+        <ChartAreaInteractive data={chartData} />
+      </div>
 
       {/* Quick Stats */}
       <div className="grid md:grid-cols-2 gap-4">

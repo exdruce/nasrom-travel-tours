@@ -1,7 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { DashboardNav } from "@/components/dashboard/nav";
-import { DashboardHeader } from "@/components/dashboard/header";
+import { NTTSidebar } from "@/components/dashboard/ntt-sidebar";
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
 
 export default async function DashboardLayout({
   children,
@@ -27,7 +38,7 @@ export default async function DashboardLayout({
   // Check for business
   const { data: business } = await supabase
     .from("businesses")
-    .select("id")
+    .select("*")
     .eq("owner_id", user.id)
     .single();
 
@@ -36,12 +47,26 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardHeader user={user} profile={profile} />
-      <div className="flex">
-        <DashboardNav />
-        <main className="flex-1 p-6 lg:p-8">{children}</main>
-      </div>
-    </div>
+    <SidebarProvider>
+      <NTTSidebar
+        user={{ ...user, email: user.email || "" }}
+        profile={profile}
+        business={business}
+      />
+      <SidebarInset>
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbPage>Dashboard</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </header>
+        <main className="flex-1 p-6">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
