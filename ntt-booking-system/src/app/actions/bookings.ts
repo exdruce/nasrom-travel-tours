@@ -13,6 +13,16 @@ const bookingItemSchema = z.object({
   unitPrice: z.number().min(0),
 });
 
+const passengerSchema = z.object({
+  full_name: z.string().min(1),
+  ic_passport: z.string().min(1),
+  dob: z.string().nullable().optional(),
+  calculated_age: z.number().min(0),
+  gender: z.enum(["L", "P"]),
+  nationality: z.string().min(1),
+  passenger_type: z.enum(["adult", "child", "infant"]),
+});
+
 const createBookingSchema = z.object({
   businessId: z.string().uuid(),
   serviceId: z.string().uuid(),
@@ -24,6 +34,7 @@ const createBookingSchema = z.object({
   startTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/),
   pax: z.number().min(1),
   items: z.array(bookingItemSchema),
+  passengers: z.array(passengerSchema).optional(),
   subtotal: z.number().min(0),
   addonsTotal: z.number().min(0),
   totalAmount: z.number().min(0),
@@ -80,10 +91,34 @@ export async function createBooking(input: CreateBookingInput) {
     return { error: { _form: [`Only ${remaining} spots remaining`] } };
   }
 
+  // Fetch business settings for auto-cancel timeout
+  let autoCancelMinutes = 30; // Default 30 minutes
+  let autoCancelEnabled = true;
+
+  const { data: settings } = await supabase
+    .from("business_settings")
+    .select("auto_cancel_timeout, auto_cancel_enabled")
+    .eq("business_id", data.businessId)
+    .single();
+
+  if (settings) {
+    const typedSettings = settings as {
+      auto_cancel_timeout: number;
+      auto_cancel_enabled: boolean;
+    };
+    autoCancelMinutes = typedSettings.auto_cancel_timeout;
+    autoCancelEnabled = typedSettings.auto_cancel_enabled;
+  }
+
+  // Calculate expires_at based on business settings
+  const expiresAt = autoCancelEnabled
+    ? new Date(Date.now() + autoCancelMinutes * 60 * 1000).toISOString()
+    : null;
+
   // Generate unique reference code
   const refCode = generateRefCode();
 
-  // Create booking
+  // Create booking with expires_at
   const { data: booking, error: bookingError } = await supabase
     .from("bookings")
     .insert({
@@ -102,6 +137,7 @@ export async function createBooking(input: CreateBookingInput) {
       addons_total: data.addonsTotal,
       total_amount: data.totalAmount,
       notes: data.notes || null,
+      expires_at: expiresAt,
     } as never)
     .select()
     .single();
@@ -112,6 +148,30 @@ export async function createBooking(input: CreateBookingInput) {
   }
 
   const typedBooking = booking as { id: string; ref_code: string };
+
+  // Insert passengers if provided
+  if (data.passengers && data.passengers.length > 0) {
+    const passengerRecords = data.passengers.map((p, index) => ({
+      booking_id: typedBooking.id,
+      full_name: p.full_name.toUpperCase(),
+      ic_passport: p.ic_passport,
+      dob: p.dob || null,
+      calculated_age: p.calculated_age,
+      gender: p.gender,
+      nationality: p.nationality.toUpperCase(),
+      passenger_type: p.passenger_type,
+      sort_order: index,
+    }));
+
+    const { error: passengersError } = await supabase
+      .from("passengers")
+      .insert(passengerRecords as never[]);
+
+    if (passengersError) {
+      console.error("Create passengers error:", passengersError);
+      // Don't fail the whole booking, passengers can be added later
+    }
+  }
 
   // Create booking items
   if (data.items.length > 0) {

@@ -122,6 +122,7 @@ export interface Booking {
   internal_notes: string | null;
   cancelled_at: string | null;
   cancelled_reason: string | null;
+  expires_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -150,6 +151,52 @@ export interface Payment {
   refund_amount: number | null;
   refund_reason: string | null;
   metadata: Json | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Passenger Types (Jabatan Laut Compliance)
+export type PassengerType = "adult" | "child" | "infant";
+export type Gender = "L" | "P";
+
+export interface Passenger {
+  id: string;
+  booking_id: string;
+  full_name: string;
+  ic_passport: string;
+  dob: string | null;
+  calculated_age: number;
+  gender: Gender;
+  nationality: string;
+  passenger_type: PassengerType;
+  sort_order: number | null;
+  created_at: string;
+}
+
+// Business Settings (Configuration)
+export type PaymentGateway =
+  | "bayarcash"
+  | "chip"
+  | "stripe"
+  | "senangpay"
+  | "toyyibpay"
+  | "manual";
+export type AutoCancelTimeout = 15 | 30 | 60 | 1440;
+
+export interface BusinessSettings {
+  id: string;
+  business_id: string;
+  payment_gateway: PaymentGateway;
+  payment_gateway_enabled: boolean;
+  auto_cancel_timeout: number;
+  auto_cancel_enabled: boolean;
+  email_notifications: boolean;
+  whatsapp_notifications: boolean;
+  notification_phone: string | null;
+  boat_name: string | null;
+  boat_reg_no: string | null;
+  default_destination: string | null;
+  crew_count: number;
   created_at: string;
   updated_at: string;
 }

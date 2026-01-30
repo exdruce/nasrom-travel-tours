@@ -21,14 +21,15 @@ import {
   Mail,
   Phone,
   Palette,
-  Eye,
   Save,
   ExternalLink,
   Rocket,
   EyeOff,
+  Settings2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { updateBusiness, toggleBusinessPublish } from "@/app/actions/settings";
+import { ConfigurationSection } from "@/components/settings/ConfigurationSection";
 import type { Business } from "@/types";
 
 interface SettingsPageClientProps {
@@ -42,6 +43,9 @@ export function SettingsPageClient({ business }: SettingsPageClientProps) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isPublished, setIsPublished] = useState(business.is_published);
   const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<"profile" | "configuration">(
+    "profile",
+  );
   const [formData, setFormData] = useState({
     name: business.name,
     slug: business.slug,
@@ -127,7 +131,7 @@ export function SettingsPageClient({ business }: SettingsPageClientProps) {
           <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
           <p className="text-gray-500">Manage your business settings</p>
         </div>
-        {isEditing ? (
+        {activeTab === "profile" && isEditing ? (
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setIsEditing(false)}>
               Cancel
@@ -137,290 +141,330 @@ export function SettingsPageClient({ business }: SettingsPageClientProps) {
               {isSaving ? "Saving..." : "Save Changes"}
             </Button>
           </div>
-        ) : (
+        ) : activeTab === "profile" ? (
           <Button onClick={() => setIsEditing(true)}>Edit Settings</Button>
-        )}
+        ) : null}
       </div>
 
-      {/* Public Booking URL - Prominent */}
-      <Card className="border-2 border-teal-200 bg-teal-50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-teal-700">
-            <Globe className="h-5 w-5" />
-            Public Booking URL
-          </CardTitle>
-          <CardDescription>
-            Share this link with customers to let them book your services
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 bg-white rounded-lg border px-4 py-3 font-mono text-sm">
-              {bookingUrl}
-            </div>
-            <Button variant="outline" size="icon" onClick={handleCopy}>
-              {copied ? (
-                <Check className="h-4 w-4 text-green-600" />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
-            </Button>
-            <Button asChild>
-              <a href={bookingUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Preview
-              </a>
-            </Button>
-          </div>
-          <div className="mt-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Badge
-                variant={isPublished ? "default" : "secondary"}
-                className={isPublished ? "bg-green-500" : "bg-yellow-500"}
-              >
-                {isPublished ? "Published" : "Draft"}
-              </Badge>
-              <span className="text-sm text-gray-500">
-                {isPublished
-                  ? "Your booking page is live and accepting bookings"
-                  : "Publish your business to accept bookings"}
-              </span>
-            </div>
-            <Button
-              variant={isPublished ? "outline" : "default"}
-              size="sm"
-              onClick={handlePublishToggle}
-              disabled={isPublishing}
-            >
-              {isPublishing ? (
-                "Processing..."
-              ) : isPublished ? (
-                <>
-                  <EyeOff className="h-4 w-4 mr-2" />
-                  Unpublish
-                </>
-              ) : (
-                <>
-                  <Rocket className="h-4 w-4 mr-2" />
-                  Publish Now
-                </>
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Tab Navigation */}
+      <div className="flex gap-2 border-b pb-2">
+        <Button
+          variant={activeTab === "profile" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setActiveTab("profile")}
+        >
+          <Building2 className="h-4 w-4 mr-2" />
+          Business Profile
+        </Button>
+        <Button
+          variant={activeTab === "configuration" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setActiveTab("configuration")}
+        >
+          <Settings2 className="h-4 w-4 mr-2" />
+          Configuration
+        </Button>
+      </div>
 
-      {/* Business Profile */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            Business Profile
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Business Name</Label>
-              {isEditing ? (
-                <Input
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                />
-              ) : (
-                <p className="text-lg font-medium">{business.name}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label>URL Slug</Label>
-              {isEditing ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-500">/book/</span>
-                  <Input
-                    value={formData.slug}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        slug: e.target.value
-                          .toLowerCase()
-                          .replace(/[^a-z0-9-]/g, "-"),
-                      })
-                    }
-                  />
+      {/* Profile Tab */}
+      {activeTab === "profile" && (
+        <>
+          {/* Public Booking URL - Prominent */}
+          <Card className="border-2 border-teal-200 bg-teal-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-teal-700">
+                <Globe className="h-5 w-5" />
+                Public Booking URL
+              </CardTitle>
+              <CardDescription>
+                Share this link with customers to let them book your services
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-white rounded-lg border px-4 py-3 font-mono text-sm">
+                  {bookingUrl}
                 </div>
-              ) : (
-                <p className="font-mono text-teal-600">{business.slug}</p>
-              )}
-            </div>
-          </div>
+                <Button variant="outline" size="icon" onClick={handleCopy}>
+                  {copied ? (
+                    <Check className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button asChild>
+                  <a
+                    href={bookingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Preview
+                  </a>
+                </Button>
+              </div>
+              <div className="mt-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant={isPublished ? "default" : "secondary"}
+                    className={isPublished ? "bg-green-500" : "bg-yellow-500"}
+                  >
+                    {isPublished ? "Published" : "Draft"}
+                  </Badge>
+                  <span className="text-sm text-gray-500">
+                    {isPublished
+                      ? "Your booking page is live and accepting bookings"
+                      : "Publish your business to accept bookings"}
+                  </span>
+                </div>
+                <Button
+                  variant={isPublished ? "outline" : "default"}
+                  size="sm"
+                  onClick={handlePublishToggle}
+                  disabled={isPublishing}
+                >
+                  {isPublishing ? (
+                    "Processing..."
+                  ) : isPublished ? (
+                    <>
+                      <EyeOff className="h-4 w-4 mr-2" />
+                      Unpublish
+                    </>
+                  ) : (
+                    <>
+                      <Rocket className="h-4 w-4 mr-2" />
+                      Publish Now
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
-          <div className="space-y-2">
-            <Label>Description</Label>
-            {isEditing ? (
-              <textarea
-                className="w-full min-h-[100px] px-3 py-2 border rounded-md resize-none"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                placeholder="Describe your business..."
-              />
-            ) : (
-              <p className="text-gray-600">
-                {business.description || "No description set"}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Address</Label>
-            {isEditing ? (
-              <Input
-                value={formData.address}
-                onChange={(e) =>
-                  setFormData({ ...formData, address: e.target.value })
-                }
-                placeholder="Your business address"
-              />
-            ) : (
-              <p className="text-gray-600">
-                {business.address || "No address set"}
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Contact Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5" />
-            Contact Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                Contact Email
-              </Label>
-              {isEditing ? (
-                <Input
-                  type="email"
-                  value={formData.contact_email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, contact_email: e.target.value })
-                  }
-                />
-              ) : (
-                <p>{business.contact_email || "Not set"}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Phone className="h-4 w-4" />
-                Contact Phone
-              </Label>
-              {isEditing ? (
-                <Input
-                  type="tel"
-                  value={formData.contact_phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, contact_phone: e.target.value })
-                  }
-                />
-              ) : (
-                <p>{business.contact_phone || "Not set"}</p>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Branding */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Palette className="h-5 w-5" />
-            Branding
-          </CardTitle>
-          <CardDescription>
-            Customize colors for your booking page
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label>Primary Color</Label>
-              <div className="flex items-center gap-3">
-                {isEditing ? (
-                  <>
-                    <input
-                      type="color"
-                      value={colors.primary}
-                      onChange={(e) =>
-                        setColors({ ...colors, primary: e.target.value })
-                      }
-                      className="w-12 h-12 rounded cursor-pointer"
-                    />
+          {/* Business Profile */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                Business Profile
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Business Name</Label>
+                  {isEditing ? (
                     <Input
-                      value={colors.primary}
+                      value={formData.name}
                       onChange={(e) =>
-                        setColors({ ...colors, primary: e.target.value })
+                        setFormData({ ...formData, name: e.target.value })
                       }
-                      className="w-32 font-mono"
                     />
-                  </>
+                  ) : (
+                    <p className="text-lg font-medium">{business.name}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label>URL Slug</Label>
+                  {isEditing ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500">/book/</span>
+                      <Input
+                        value={formData.slug}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            slug: e.target.value
+                              .toLowerCase()
+                              .replace(/[^a-z0-9-]/g, "-"),
+                          })
+                        }
+                      />
+                    </div>
+                  ) : (
+                    <p className="font-mono text-teal-600">{business.slug}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Description</Label>
+                {isEditing ? (
+                  <textarea
+                    className="w-full min-h-[100px] px-3 py-2 border rounded-md resize-none"
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                    placeholder="Describe your business..."
+                  />
                 ) : (
-                  <>
-                    <div
-                      className="w-12 h-12 rounded"
-                      style={{ backgroundColor: colors.primary }}
-                    />
-                    <span className="font-mono">{colors.primary}</span>
-                  </>
+                  <p className="text-gray-600">
+                    {business.description || "No description set"}
+                  </p>
                 )}
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Secondary Color</Label>
-              <div className="flex items-center gap-3">
+
+              <div className="space-y-2">
+                <Label>Address</Label>
                 {isEditing ? (
-                  <>
-                    <input
-                      type="color"
-                      value={colors.secondary}
-                      onChange={(e) =>
-                        setColors({ ...colors, secondary: e.target.value })
-                      }
-                      className="w-12 h-12 rounded cursor-pointer"
-                    />
-                    <Input
-                      value={colors.secondary}
-                      onChange={(e) =>
-                        setColors({ ...colors, secondary: e.target.value })
-                      }
-                      className="w-32 font-mono"
-                    />
-                  </>
+                  <Input
+                    value={formData.address}
+                    onChange={(e) =>
+                      setFormData({ ...formData, address: e.target.value })
+                    }
+                    placeholder="Your business address"
+                  />
                 ) : (
-                  <>
-                    <div
-                      className="w-12 h-12 rounded"
-                      style={{ backgroundColor: colors.secondary }}
-                    />
-                    <span className="font-mono">{colors.secondary}</span>
-                  </>
+                  <p className="text-gray-600">
+                    {business.address || "No address set"}
+                  </p>
                 )}
               </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+
+          {/* Contact Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="h-5 w-5" />
+                Contact Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Contact Email
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      type="email"
+                      value={formData.contact_email}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          contact_email: e.target.value,
+                        })
+                      }
+                    />
+                  ) : (
+                    <p>{business.contact_email || "Not set"}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    Contact Phone
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      type="tel"
+                      value={formData.contact_phone}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          contact_phone: e.target.value,
+                        })
+                      }
+                    />
+                  ) : (
+                    <p>{business.contact_phone || "Not set"}</p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Branding */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="h-5 w-5" />
+                Branding
+              </CardTitle>
+              <CardDescription>
+                Customize colors for your booking page
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>Primary Color</Label>
+                  <div className="flex items-center gap-3">
+                    {isEditing ? (
+                      <>
+                        <input
+                          type="color"
+                          value={colors.primary}
+                          onChange={(e) =>
+                            setColors({ ...colors, primary: e.target.value })
+                          }
+                          className="w-12 h-12 rounded cursor-pointer"
+                        />
+                        <Input
+                          value={colors.primary}
+                          onChange={(e) =>
+                            setColors({ ...colors, primary: e.target.value })
+                          }
+                          className="w-32 font-mono"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div
+                          className="w-12 h-12 rounded"
+                          style={{ backgroundColor: colors.primary }}
+                        />
+                        <span className="font-mono">{colors.primary}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Secondary Color</Label>
+                  <div className="flex items-center gap-3">
+                    {isEditing ? (
+                      <>
+                        <input
+                          type="color"
+                          value={colors.secondary}
+                          onChange={(e) =>
+                            setColors({ ...colors, secondary: e.target.value })
+                          }
+                          className="w-12 h-12 rounded cursor-pointer"
+                        />
+                        <Input
+                          value={colors.secondary}
+                          onChange={(e) =>
+                            setColors({ ...colors, secondary: e.target.value })
+                          }
+                          className="w-32 font-mono"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div
+                          className="w-12 h-12 rounded"
+                          style={{ backgroundColor: colors.secondary }}
+                        />
+                        <span className="font-mono">{colors.secondary}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {/* Configuration Tab */}
+      {activeTab === "configuration" && (
+        <ConfigurationSection businessId={business.id} />
+      )}
     </div>
   );
 }

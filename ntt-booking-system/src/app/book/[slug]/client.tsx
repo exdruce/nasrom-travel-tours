@@ -38,10 +38,16 @@ import {
   Wallet,
   Building2,
   QrCode,
+  UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { createBooking, type CreateBookingInput } from "@/app/actions/bookings";
+import {
+  PassengerForm,
+  validatePassengers,
+  type PassengerData,
+} from "@/components/booking/PassengerForm";
 import type {
   Business,
   Service,
@@ -72,7 +78,13 @@ interface SelectedAddon {
   quantity: number;
 }
 
-type BookingStep = "service" | "datetime" | "details" | "review" | "payment";
+type BookingStep =
+  | "service"
+  | "datetime"
+  | "details"
+  | "passengers"
+  | "review"
+  | "payment";
 
 type PaymentMethod =
   | "FPX"
@@ -142,6 +154,7 @@ export function BookingPageClient({
     useState<PaymentMethod | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [passengers, setPassengers] = useState<PassengerData[]>([]);
 
   // Get branding colors
   const branding = business.branding as {
@@ -283,6 +296,15 @@ export function BookingPageClient({
       toast.error("Please fill in all required fields");
       return;
     }
+    setCurrentStep("passengers");
+  };
+
+  const handleProceedFromPassengers = () => {
+    const validation = validatePassengers(passengers);
+    if (!validation.valid) {
+      toast.error(validation.errors[0]);
+      return;
+    }
     setCurrentStep("review");
   };
 
@@ -392,7 +414,8 @@ export function BookingPageClient({
   const goBack = () => {
     if (currentStep === "datetime") setCurrentStep("service");
     else if (currentStep === "details") setCurrentStep("datetime");
-    else if (currentStep === "review") setCurrentStep("details");
+    else if (currentStep === "passengers") setCurrentStep("details");
+    else if (currentStep === "review") setCurrentStep("passengers");
     else if (currentStep === "payment") setCurrentStep("review");
   };
 
@@ -400,6 +423,7 @@ export function BookingPageClient({
     { id: "service", label: "Service" },
     { id: "datetime", label: "Date & Time" },
     { id: "details", label: "Details" },
+    { id: "passengers", label: "Passengers" },
     { id: "review", label: "Review" },
     { id: "payment", label: "Payment" },
   ];
@@ -946,13 +970,50 @@ export function BookingPageClient({
               onClick={handleProceedToReview}
               style={{ backgroundColor: primaryColor }}
             >
+              Passenger Details
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        )}
+
+        {/* Step 4: Passenger Details (Jabatan Laut Compliance) */}
+        {currentStep === "passengers" && selectedSlot && (
+          <div className="space-y-6">
+            <Button variant="ghost" onClick={goBack} className="mb-2">
+              <ChevronLeft className="h-4 w-4 mr-1" /> Back
+            </Button>
+
+            <div>
+              <h2 className="text-2xl font-bold">Passenger Details</h2>
+              <p className="text-gray-500">
+                Required by Jabatan Laut Malaysia for safety compliance
+              </p>
+            </div>
+
+            <Card>
+              <CardContent className="p-6">
+                <PassengerForm
+                  paxCount={totalPax}
+                  tripDate={selectedSlot.date}
+                  passengers={passengers}
+                  onChange={setPassengers}
+                />
+              </CardContent>
+            </Card>
+
+            <Button
+              size="lg"
+              className="w-full"
+              onClick={handleProceedFromPassengers}
+              style={{ backgroundColor: primaryColor }}
+            >
               Review Booking
               <ChevronRight className="h-4 w-4 ml-2" />
             </Button>
           </div>
         )}
 
-        {/* Step 4: Review & Confirm */}
+        {/* Step 5: Review & Confirm */}
         {currentStep === "review" && selectedService && selectedSlot && (
           <div className="space-y-6">
             <Button variant="ghost" onClick={goBack} className="mb-2">
