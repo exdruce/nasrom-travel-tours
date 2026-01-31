@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { BookingPageClient } from "./client";
+import { getLocalDateString } from "@/lib/utils";
 import type {
   Business,
   Service,
@@ -85,10 +86,10 @@ export default async function PublicBookingPage({
   }));
 
   // Get upcoming availability (next 30 days)
-  const today = new Date().toISOString().split("T")[0];
-  const thirtyDaysLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0];
+  const today = getLocalDateString();
+  const thirtyDaysLater = getLocalDateString(
+    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+  );
 
   const { data: availabilityData } = await supabase
     .from("availability")

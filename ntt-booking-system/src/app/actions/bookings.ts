@@ -293,3 +293,55 @@ export async function cancelBooking(bookingId: string, reason?: string) {
 
   return { success: true };
 }
+
+export async function updateBookingStatus(
+  bookingId: string,
+  newStatus: "pending" | "confirmed" | "completed" | "cancelled" | "no_show",
+  reason?: string,
+) {
+  const supabase = createAdminClient();
+
+  // Get current booking
+  const { data: booking } = await supabase
+    .from("bookings")
+    .select("availability_id, pax, status")
+    .eq("id", bookingId)
+    .single();
+
+  if (!booking) {
+    return { error: "Booking not found" };
+  }
+
+  const typedBooking = booking as {
+    availability_id: string | null;
+    pax: number;
+    status: string;
+  };
+
+  // If cancelling, use the existing cancelBooking logic (releases capacity)
+  if (newStatus === "cancelled") {
+    return cancelBooking(bookingId, reason);
+  }
+
+  // Build update object
+  const updateData: Record<string, unknown> = {
+    status: newStatus,
+  };
+
+  // If confirming, clear the expires_at so it doesn't get auto-cancelled
+  if (newStatus === "confirmed" && typedBooking.status === "pending") {
+    updateData.expires_at = null;
+  }
+
+  // Update booking
+  const { error: updateError } = await supabase
+    .from("bookings")
+    .update(updateData as never)
+    .eq("id", bookingId);
+
+  if (updateError) {
+    return { error: updateError.message };
+  }
+
+  return { success: true };
+}

@@ -39,8 +39,9 @@ import {
   Building2,
   QrCode,
   UserCheck,
+  AlertTriangle,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getLocalDateString } from "@/lib/utils";
 import { toast } from "sonner";
 import { createBooking, type CreateBookingInput } from "@/app/actions/bookings";
 import {
@@ -124,6 +125,25 @@ const PAYMENT_METHODS: {
   },
 ];
 
+const MALAYSIAN_STATES = [
+  "Johor",
+  "Kedah",
+  "Kelantan",
+  "Melaka",
+  "Negeri Sembilan",
+  "Pahang",
+  "Perak",
+  "Perlis",
+  "Pulau Pinang",
+  "Sabah",
+  "Sarawak",
+  "Selangor",
+  "Terengganu",
+  "Wilayah Persekutuan (Kuala Lumpur)",
+  "Wilayah Persekutuan (Labuan)",
+  "Wilayah Persekutuan (Putrajaya)",
+];
+
 export function BookingPageClient({
   business,
   services,
@@ -149,6 +169,11 @@ export function BookingPageClient({
     email: "",
     phone: "",
     notes: "",
+    address1: "",
+    address2: "",
+    postcode: "",
+    city: "",
+    state: "",
   });
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethod | null>(null);
@@ -188,6 +213,56 @@ export function BookingPageClient({
   }, [availability, selectedService]);
 
   const availableDates = Object.keys(availabilityByDate).sort();
+
+  // Calculate service availability stats for urgency badges
+  const serviceAvailabilityStats = useMemo(() => {
+    const stats: Record<
+      string,
+      { minSeats: number; nextDate: string | null; hasLowInventory: boolean }
+    > = {};
+
+    for (const service of services) {
+      const serviceSlots = availability.filter(
+        (slot) => !slot.service_id || slot.service_id === service.id,
+      );
+
+      // Get future dates only (use local timezone)
+      const today = getLocalDateString();
+      const futureSlots = serviceSlots.filter((slot) => slot.date >= today);
+
+      if (futureSlots.length === 0) {
+        stats[service.id] = {
+          minSeats: 0,
+          nextDate: null,
+          hasLowInventory: false,
+        };
+        continue;
+      }
+
+      // Find the next available date and minimum seats across all future slots
+      const sortedSlots = futureSlots.sort((a, b) =>
+        a.date.localeCompare(b.date),
+      );
+      let minSeats = Infinity;
+      let nextDate: string | null = null;
+
+      for (const slot of sortedSlots) {
+        const remaining = slot.capacity - slot.booked_count;
+        if (remaining > 0) {
+          if (!nextDate) nextDate = slot.date;
+          if (remaining < minSeats) minSeats = remaining;
+        }
+      }
+
+      stats[service.id] = {
+        minSeats: minSeats === Infinity ? 0 : minSeats,
+        nextDate,
+        hasLowInventory: minSeats > 0 && minSeats <= 10,
+      };
+    }
+
+    return stats;
+  }, [availability, services]);
 
   // Calculate totals
   const totals = useMemo(() => {
@@ -273,7 +348,10 @@ export function BookingPageClient({
 
   const handleAddonToggle = (addonId: string, checked: boolean) => {
     if (checked) {
-      setSelectedAddons((prev) => [...prev, { addonId, quantity: totalPax }]);
+      setSelectedAddons((prev) => {
+        if (prev.some((a) => a.addonId === addonId)) return prev;
+        return [...prev, { addonId, quantity: totalPax }];
+      });
     } else {
       setSelectedAddons((prev) => prev.filter((a) => a.addonId !== addonId));
     }
@@ -376,7 +454,16 @@ export function BookingPageClient({
         subtotal: totals.subtotal,
         addonsTotal: totals.addonsTotal,
         totalAmount: totals.total,
-        notes: customerInfo.notes,
+        notes: `
+${customerInfo.notes}
+
+--- Address Details ---
+Address: ${customerInfo.address1}
+${customerInfo.address2 ? `Address 2: ${customerInfo.address2}` : ""}
+Postcode: ${customerInfo.postcode}
+City: ${customerInfo.city}
+State: ${customerInfo.state}
+`.trim(),
       });
 
       if ("error" in result) {
@@ -442,8 +529,8 @@ export function BookingPageClient({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+      <header className="bg-white border-b sticky top-0 z-50 transition-all duration-200">
+        <div className="max-w-4xl mx-auto px-4 py-3 md:py-4">
           <div className="flex items-center gap-3">
             {business.logo_url ? (
               <Image
@@ -451,33 +538,37 @@ export function BookingPageClient({
                 alt={business.name}
                 width={40}
                 height={40}
-                className="rounded-lg"
+                className="rounded-lg w-8 h-8 md:w-10 md:h-10"
               />
             ) : (
               <img
                 src="/logo.svg"
                 alt={business.name}
-                className="w-10 h-10 rounded-lg"
+                className="w-8 h-8 md:w-10 md:h-10 rounded-lg"
               />
             )}
             <div>
-              <h1 className="font-serif font-bold text-xl">{business.name}</h1>
-              <p className="text-sm text-gray-500">Book your experience</p>
+              <h1 className="font-serif font-bold text-lg md:text-xl leading-tight">
+                {business.name}
+              </h1>
+              <p className="text-xs md:text-sm text-gray-500 hidden md:block">
+                Book your experience
+              </p>
             </div>
           </div>
         </div>
       </header>
 
       {/* Progress Steps */}
-      <div className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+      <div className="bg-white border-b sticky top-[57px] md:top-[73px] z-40 shadow-sm md:shadow-none overflow-x-auto no-scrollbar">
+        <div className="max-w-4xl mx-auto px-4 py-3 md:py-4 min-w-max">
+          <div className="flex items-center justify-between gap-4 md:gap-0">
             {steps.map((step, index) => (
               <div key={step.id} className="flex items-center">
                 <div className="flex items-center gap-2">
                   <div
                     className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                      "w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm font-bold transition-colors",
                       index < currentStepIndex
                         ? "bg-green-500 text-white"
                         : index === currentStepIndex
@@ -491,24 +582,26 @@ export function BookingPageClient({
                     }
                   >
                     {index < currentStepIndex ? (
-                      <Check className="h-4 w-4" />
+                      <Check className="h-3 w-3 md:h-4 md:w-4" />
                     ) : (
                       index + 1
                     )}
                   </div>
                   <span
                     className={cn(
-                      "text-sm font-medium hidden sm:inline",
+                      "text-xs md:text-sm font-medium whitespace-nowrap",
                       index === currentStepIndex
                         ? "text-gray-900"
                         : "text-gray-500",
+                      // On mobile, only show current and next step label to save space
+                      "block md:inline",
                     )}
                   >
                     {step.label}
                   </span>
                 </div>
                 {index < steps.length - 1 && (
-                  <div className="w-12 sm:w-24 h-px bg-gray-300 mx-2" />
+                  <div className="w-8 md:w-24 h-px bg-gray-300 mx-2 hidden md:block" />
                 )}
               </div>
             ))}
@@ -517,25 +610,28 @@ export function BookingPageClient({
       </div>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="w-full md:max-w-4xl mx-auto px-4 py-6 md:py-8 pb-32 md:pb-8">
         {/* Step 1: Select Service */}
         {currentStep === "service" && (
-          <div className="space-y-6">
+          <div className="space-y-6 booking-step-content">
             <div>
-              <h2 className="font-serif text-3xl font-bold text-primary">
+              <h2 className="font-serif text-2xl md:text-3xl font-bold text-primary">
                 Select a Service
               </h2>
-              <p className="text-gray-500">
+              <p className="text-gray-500 text-sm md:text-base">
                 Choose the experience you want to book
               </p>
             </div>
             <div className="grid gap-4">
-              {services.map((service) => (
+              {services.map((service, index) => (
                 <Card
                   key={service.id}
                   className={cn(
-                    "cursor-pointer transition-all hover:shadow-md",
+                    "cursor-pointer transition-all hover:shadow-md booking-card animate-slide-up group active:scale-[0.98]",
                     selectedService?.id === service.id && "ring-2",
+                    index === 0 && "stagger-1",
+                    index === 1 && "stagger-2",
+                    index === 2 && "stagger-3",
                   )}
                   style={
                     selectedService?.id === service.id
@@ -544,50 +640,57 @@ export function BookingPageClient({
                   }
                   onClick={() => handleServiceSelect(service)}
                 >
-                  <CardContent className="p-6">
-                    <div className="flex gap-4">
-                      <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center shrink-0">
+                  <CardContent className="p-4 md:p-6">
+                    <div className="flex flex-col md:flex-row gap-4">
+                      {/* Image - Full width on mobile if exists, else side block */}
+                      <div className="w-full md:w-24 h-32 md:h-24 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
                         {service.images?.[0] ? (
                           <Image
                             src={service.images[0]}
                             alt={service.name}
-                            width={80}
-                            height={80}
-                            className="rounded-lg object-cover"
+                            width={120}
+                            height={120}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         ) : (
                           <Package className="h-8 w-8 text-gray-400" />
                         )}
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-serif font-semibold text-xl text-primary">
-                          {service.name}
-                        </h3>
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-serif font-semibold text-lg md:text-xl text-primary leading-tight">
+                            {service.name}
+                          </h3>
+                          <ChevronRight className="h-5 w-5 text-gray-400 md:hidden" />
+                        </div>
                         {service.description && (
-                          <p className="text-gray-500 text-sm line-clamp-2 mt-1">
+                          <p className="text-gray-500 text-xs md:text-sm line-clamp-2 mt-1">
                             {service.description}
                           </p>
                         )}
-                        <div className="flex flex-wrap items-center gap-4 mt-3 text-sm">
-                          <span
-                            className="font-bold text-lg"
-                            style={{ color: primaryColor }}
-                          >
-                            {service.variants.length > 0
-                              ? `From ${formatPrice(Math.min(service.price, ...service.variants.map((v) => v.price)))}`
-                              : formatPrice(service.price)}
-                          </span>
-                          <div className="flex items-center gap-1 text-gray-500">
-                            <Clock className="h-4 w-4" />
+                        <div className="flex flex-wrap items-center gap-3 md:gap-4 mt-3 text-xs md:text-sm">
+                          <div className="flex items-center gap-1 text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                            <Clock className="h-3 w-3 md:h-4 md:w-4" />
                             {service.duration_minutes} min
                           </div>
-                          <div className="flex items-center gap-1 text-gray-500">
-                            <Users className="h-4 w-4" />
+                          <div className="flex items-center gap-1 text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                            <Users className="h-3 w-3 md:h-4 md:w-4" />
                             Max {service.max_capacity}
                           </div>
+                          {/* Low inventory urgency badge */}
+                          {serviceAvailabilityStats[service.id]
+                            ?.hasLowInventory && (
+                            <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold animate-pulse">
+                              <AlertTriangle className="h-3 w-3" />
+                              {
+                                serviceAvailabilityStats[service.id].minSeats
+                              }{" "}
+                              Seats Left!
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-gray-400 self-center" />
+                      <ChevronRight className="h-5 w-5 text-gray-400 self-center hidden md:block" />
                     </div>
                   </CardContent>
                 </Card>
@@ -598,33 +701,37 @@ export function BookingPageClient({
 
         {/* Step 2: Select Date & Time */}
         {currentStep === "datetime" && selectedService && (
-          <div className="space-y-6">
-            <Button variant="ghost" onClick={goBack} className="mb-2">
-              <ChevronLeft className="h-4 w-4 mr-1" /> Back
+          <div className="space-y-6 booking-step-content pb-24 md:pb-0">
+            <Button
+              variant="ghost"
+              onClick={goBack}
+              className="mb-2 pl-0 hover:bg-transparent hover:text-primary"
+            >
+              <ChevronLeft className="h-5 w-5 mr-1" /> Back to Services
             </Button>
 
             <div>
-              <h2 className="font-serif text-3xl font-bold text-primary">
+              <h2 className="font-serif text-2xl md:text-3xl font-bold text-primary">
                 Choose Date & Time
               </h2>
-              <p className="text-gray-500">
+              <p className="text-gray-500 text-sm md:text-base">
                 Select when you want to book {selectedService.name}
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="flex flex-col md:grid md:grid-cols-2 gap-6">
               {/* Date Selection */}
-              <Card>
-                <CardHeader>
+              <Card className="border-0 shadow-none md:border md:shadow-sm">
+                <CardHeader className="px-0 md:px-6 pt-0 md:pt-6">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Calendar className="h-5 w-5" />
                     Available Dates
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-0 md:px-6">
                   {availableDates.length > 0 ? (
-                    <div className="grid grid-cols-3 gap-2">
-                      {availableDates.slice(0, 12).map((date) => {
+                    <div className="flex overflow-x-auto pb-4 gap-2 no-scrollbar md:grid md:grid-cols-3 md:pb-0 snap-x snap-mandatory">
+                      {availableDates.slice(0, 14).map((date) => {
                         const d = new Date(date);
                         const isSelected = date === selectedDate;
                         return (
@@ -632,10 +739,10 @@ export function BookingPageClient({
                             key={date}
                             onClick={() => handleDateSelect(date)}
                             className={cn(
-                              "p-3 rounded-lg border text-center transition-all",
+                              "shrink-0 w-20 md:w-auto p-3 rounded-lg border text-center transition-all snap-center",
                               isSelected
-                                ? "text-white border-transparent"
-                                : "hover:bg-gray-50",
+                                ? "text-white border-transparent shadow-md transform scale-105"
+                                : "hover:bg-gray-50 bg-white",
                             )}
                             style={
                               isSelected
@@ -643,12 +750,12 @@ export function BookingPageClient({
                                 : {}
                             }
                           >
-                            <div className="text-xs uppercase">
+                            <div className="text-[10px] uppercase font-medium opacity-80">
                               {d.toLocaleDateString("en-US", {
                                 weekday: "short",
                               })}
                             </div>
-                            <div className="text-lg font-bold">
+                            <div className="text-xl md:text-2xl font-bold my-1">
                               {d.getDate()}
                             </div>
                             <div className="text-xs">
@@ -661,7 +768,7 @@ export function BookingPageClient({
                       })}
                     </div>
                   ) : (
-                    <p className="text-gray-500 text-center py-8">
+                    <p className="text-gray-500 text-center py-8 bg-gray-50 rounded-lg">
                       No available dates
                     </p>
                   )}
@@ -669,16 +776,16 @@ export function BookingPageClient({
               </Card>
 
               {/* Time Slots */}
-              <Card>
-                <CardHeader>
+              <Card className="border-0 shadow-none md:border md:shadow-sm">
+                <CardHeader className="px-0 md:px-6 pt-0 md:pt-6">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Clock className="h-5 w-5" />
                     Available Times
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-0 md:px-6">
                   {selectedDate && availabilityByDate[selectedDate] ? (
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-3">
                       {availabilityByDate[selectedDate].map((slot) => {
                         const isSelected = slot.id === selectedSlot?.id;
                         const remaining = slot.capacity - slot.booked_count;
@@ -687,10 +794,10 @@ export function BookingPageClient({
                             key={slot.id}
                             onClick={() => handleSlotSelect(slot)}
                             className={cn(
-                              "p-3 rounded-lg border text-left transition-all",
+                              "p-3 rounded-lg border text-left transition-all active:scale-95",
                               isSelected
-                                ? "text-white border-transparent"
-                                : "hover:bg-gray-50",
+                                ? "text-white border-transparent shadow-md"
+                                : "hover:bg-gray-50 bg-white",
                             )}
                             style={
                               isSelected
@@ -698,15 +805,22 @@ export function BookingPageClient({
                                 : {}
                             }
                           >
-                            <div className="font-medium">
+                            <div className="font-medium text-lg">
                               {formatTime(slot.start_time)}
                             </div>
                             <div
                               className={cn(
-                                "text-xs",
-                                isSelected ? "text-white/80" : "text-gray-500",
+                                "text-xs flex items-center mt-1",
+                                isSelected
+                                  ? "text-white/80"
+                                  : remaining <= 5
+                                    ? "text-amber-600 font-semibold"
+                                    : "text-gray-500",
                               )}
                             >
+                              {remaining <= 5 && !isSelected && (
+                                <AlertTriangle className="h-3 w-3 mr-1" />
+                              )}
                               {remaining} spot{remaining !== 1 ? "s" : ""} left
                             </div>
                           </button>
@@ -714,11 +828,11 @@ export function BookingPageClient({
                       })}
                     </div>
                   ) : (
-                    <p className="text-gray-500 text-center py-8">
+                    <div className="text-gray-500 text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-200">
                       {selectedDate
-                        ? "No times available"
-                        : "Select a date first"}
-                    </p>
+                        ? "No times available for this date"
+                        : "Please select a date above"}
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -726,8 +840,8 @@ export function BookingPageClient({
 
             {/* Variants Selection */}
             {selectedService.variants.length > 0 && (
-              <Card>
-                <CardHeader>
+              <Card className="border-0 shadow-none md:border md:shadow-sm">
+                <CardHeader className="px-0 md:px-6">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Users className="h-5 w-5" />
                     Select Guests
@@ -736,7 +850,7 @@ export function BookingPageClient({
                     Choose the number of guests for each category
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-0 md:px-6">
                   <div className="space-y-4">
                     {selectedService.variants.map((variant) => {
                       const selected = selectedVariants.find(
@@ -746,7 +860,7 @@ export function BookingPageClient({
                       return (
                         <div
                           key={variant.id}
-                          className="flex items-center justify-between p-4 border rounded-lg"
+                          className="flex items-center justify-between p-4 border rounded-lg bg-white"
                         >
                           <div>
                             <div className="font-medium">{variant.name}</div>
@@ -766,6 +880,7 @@ export function BookingPageClient({
                             <Button
                               variant="outline"
                               size="icon"
+                              className="h-8 w-8 md:h-10 md:w-10"
                               onClick={() =>
                                 handleVariantChange(
                                   variant.id,
@@ -782,6 +897,7 @@ export function BookingPageClient({
                             <Button
                               variant="outline"
                               size="icon"
+                              className="h-8 w-8 md:h-10 md:w-10"
                               onClick={() =>
                                 handleVariantChange(variant.id, quantity + 1)
                               }
@@ -799,14 +915,14 @@ export function BookingPageClient({
 
             {/* Addons Selection */}
             {selectedService.addons.length > 0 && (
-              <Card>
-                <CardHeader>
+              <Card className="border-0 shadow-none md:border md:shadow-sm">
+                <CardHeader className="px-0 md:px-6">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Gift className="h-5 w-5" />
                     Optional Add-ons
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-0 md:px-6">
                   <div className="space-y-3">
                     {selectedService.addons.map((addon) => {
                       const isSelected = selectedAddons.some(
@@ -816,8 +932,9 @@ export function BookingPageClient({
                         <div
                           key={addon.id}
                           className={cn(
-                            "flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all",
+                            "flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all active:scale-[0.99]",
                             isSelected && "border-2",
+                            !isSelected && "bg-white",
                           )}
                           style={
                             isSelected
@@ -846,7 +963,7 @@ export function BookingPageClient({
                             )}
                           </div>
                           <div
-                            className="font-bold"
+                            className="font-bold whitespace-nowrap"
                             style={{ color: primaryColor }}
                           >
                             +{formatPrice(addon.price)}
@@ -860,43 +977,46 @@ export function BookingPageClient({
             )}
 
             {/* Summary & Continue */}
-            <Card className="sticky bottom-4">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm text-gray-500">Total</div>
-                    <div
-                      className="text-2xl font-bold"
-                      style={{ color: primaryColor }}
-                    >
-                      {formatPrice(totals.total)}
-                    </div>
-                    {totalPax > 0 && (
-                      <div className="text-sm text-gray-500">
-                        {totalPax} guest{totalPax !== 1 ? "s" : ""}
-                      </div>
-                    )}
-                  </div>
-                  <Button
-                    size="lg"
-                    disabled={!canProceedToDetails}
-                    onClick={handleProceedToDetails}
-                    style={{ backgroundColor: primaryColor }}
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-[0_-4px_10px_rgba(0,0,0,0.05)] md:relative md:bottom-auto md:left-auto md:right-auto md:p-0 md:border-0 md:shadow-none z-50 safe-area-bottom">
+              <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
+                <div className="flex-1">
+                  <div className="text-xs text-gray-500">Total</div>
+                  <div
+                    className="text-xl md:text-2xl font-bold leading-tight"
+                    style={{ color: primaryColor }}
                   >
-                    Continue
-                    <ChevronRight className="h-4 w-4 ml-2" />
-                  </Button>
+                    {formatPrice(totals.total)}
+                  </div>
+                  {totalPax > 0 && (
+                    <div className="text-xs text-gray-500">
+                      {totalPax} guest{totalPax !== 1 ? "s" : ""}
+                    </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+                <Button
+                  size="lg"
+                  className="flex-1 md:flex-none md:min-w-[200px]"
+                  disabled={!canProceedToDetails}
+                  onClick={handleProceedToDetails}
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  Continue
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Step 3: Customer Details */}
         {currentStep === "details" && (
-          <div className="space-y-6">
-            <Button variant="ghost" onClick={goBack} className="mb-2">
-              <ChevronLeft className="h-4 w-4 mr-1" /> Back
+          <div className="space-y-6 booking-step-content pb-24 md:pb-0">
+            <Button
+              variant="ghost"
+              onClick={goBack}
+              className="mb-2 pl-0 hover:bg-transparent hover:text-primary"
+            >
+              <ChevronLeft className="h-5 w-5 mr-1" /> Back
             </Button>
 
             <div>
@@ -904,8 +1024,8 @@ export function BookingPageClient({
               <p className="text-gray-500">Tell us how to contact you</p>
             </div>
 
-            <Card>
-              <CardContent className="p-6 space-y-4">
+            <Card className="border-0 shadow-none md:border md:shadow-sm">
+              <CardContent className="px-0 md:p-6 space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="flex items-center gap-2">
                     <User className="h-4 w-4" />
@@ -915,6 +1035,7 @@ export function BookingPageClient({
                     id="name"
                     placeholder="John Doe"
                     value={customerInfo.name}
+                    className="h-12 text-base"
                     onChange={(e) =>
                       setCustomerInfo({ ...customerInfo, name: e.target.value })
                     }
@@ -931,6 +1052,7 @@ export function BookingPageClient({
                     type="email"
                     placeholder="john@example.com"
                     value={customerInfo.email}
+                    className="h-12 text-base"
                     onChange={(e) =>
                       setCustomerInfo({
                         ...customerInfo,
@@ -950,6 +1072,7 @@ export function BookingPageClient({
                     type="tel"
                     placeholder="+60 12-345 6789"
                     value={customerInfo.phone}
+                    className="h-12 text-base"
                     onChange={(e) =>
                       setCustomerInfo({
                         ...customerInfo,
@@ -960,10 +1083,84 @@ export function BookingPageClient({
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="address1">Address Details</Label>
+                  <Input
+                    id="address1"
+                    placeholder="Address Line 1"
+                    value={customerInfo.address1}
+                    className="h-12 text-base mb-2"
+                    onChange={(e) =>
+                      setCustomerInfo({
+                        ...customerInfo,
+                        address1: e.target.value,
+                      })
+                    }
+                  />
+                  <Input
+                    id="address2"
+                    placeholder="Address Line 2 (Optional)"
+                    value={customerInfo.address2}
+                    className="h-12 text-base mb-2"
+                    onChange={(e) =>
+                      setCustomerInfo({
+                        ...customerInfo,
+                        address2: e.target.value,
+                      })
+                    }
+                  />
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <Input
+                      id="postcode"
+                      placeholder="Postcode"
+                      value={customerInfo.postcode}
+                      className="h-12 text-base"
+                      onChange={(e) =>
+                        setCustomerInfo({
+                          ...customerInfo,
+                          postcode: e.target.value,
+                        })
+                      }
+                    />
+                    <Input
+                      id="city"
+                      placeholder="City"
+                      value={customerInfo.city}
+                      className="h-12 text-base"
+                      onChange={(e) =>
+                        setCustomerInfo({
+                          ...customerInfo,
+                          city: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <Select
+                    value={customerInfo.state}
+                    onValueChange={(value) =>
+                      setCustomerInfo({
+                        ...customerInfo,
+                        state: value,
+                      })
+                    }
+                  >
+                    <SelectTrigger className="h-12 text-base">
+                      <SelectValue placeholder="Select State" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MALAYSIAN_STATES.map((state) => (
+                        <SelectItem key={state} value={state}>
+                          {state}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="notes">Special Requests (Optional)</Label>
                   <textarea
                     id="notes"
-                    className="w-full min-h-[100px] px-3 py-2 border rounded-md resize-none"
+                    className="w-full min-h-[100px] px-3 py-2 border rounded-md resize-none text-base"
                     placeholder="Any special requirements or notes..."
                     value={customerInfo.notes}
                     onChange={(e) =>
@@ -977,23 +1174,31 @@ export function BookingPageClient({
               </CardContent>
             </Card>
 
-            <Button
-              size="lg"
-              className="w-full"
-              onClick={handleProceedToReview}
-              style={{ backgroundColor: primaryColor }}
-            >
-              Passenger Details
-              <ChevronRight className="h-4 w-4 ml-2" />
-            </Button>
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-[0_-4px_10px_rgba(0,0,0,0.05)] md:relative md:bottom-auto md:left-auto md:right-auto md:p-0 md:border-0 md:shadow-none z-50 safe-area-bottom">
+              <div className="max-w-4xl mx-auto">
+                <Button
+                  size="lg"
+                  className="w-full"
+                  onClick={handleProceedToReview}
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  Passenger Details
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Step 4: Passenger Details (Jabatan Laut Compliance) */}
         {currentStep === "passengers" && selectedSlot && (
-          <div className="space-y-6">
-            <Button variant="ghost" onClick={goBack} className="mb-2">
-              <ChevronLeft className="h-4 w-4 mr-1" /> Back
+          <div className="space-y-6 booking-step-content pb-24 md:pb-0">
+            <Button
+              variant="ghost"
+              onClick={goBack}
+              className="mb-2 pl-0 hover:bg-transparent hover:text-primary"
+            >
+              <ChevronLeft className="h-5 w-5 mr-1" /> Back
             </Button>
 
             <div>
@@ -1003,8 +1208,8 @@ export function BookingPageClient({
               </p>
             </div>
 
-            <Card>
-              <CardContent className="p-6">
+            <Card className="border-0 shadow-none md:border md:shadow-sm">
+              <CardContent className="px-0 md:p-6">
                 <PassengerForm
                   paxCount={totalPax}
                   tripDate={selectedSlot.date}
@@ -1014,23 +1219,31 @@ export function BookingPageClient({
               </CardContent>
             </Card>
 
-            <Button
-              size="lg"
-              className="w-full"
-              onClick={handleProceedFromPassengers}
-              style={{ backgroundColor: primaryColor }}
-            >
-              Review Booking
-              <ChevronRight className="h-4 w-4 ml-2" />
-            </Button>
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-[0_-4px_10px_rgba(0,0,0,0.05)] md:relative md:bottom-auto md:left-auto md:right-auto md:p-0 md:border-0 md:shadow-none z-50 safe-area-bottom">
+              <div className="max-w-4xl mx-auto">
+                <Button
+                  size="lg"
+                  className="w-full text-lg h-12"
+                  onClick={handleProceedFromPassengers}
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  Review Booking
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Step 5: Review & Confirm */}
         {currentStep === "review" && selectedService && selectedSlot && (
-          <div className="space-y-6">
-            <Button variant="ghost" onClick={goBack} className="mb-2">
-              <ChevronLeft className="h-4 w-4 mr-1" /> Back
+          <div className="space-y-6 booking-step-content pb-24 md:pb-0">
+            <Button
+              variant="ghost"
+              onClick={goBack}
+              className="mb-2 pl-0 hover:bg-transparent hover:text-primary"
+            >
+              <ChevronLeft className="h-5 w-5 mr-1" /> Back
             </Button>
 
             <div>
@@ -1040,10 +1253,10 @@ export function BookingPageClient({
               </p>
             </div>
 
-            <Card>
-              <CardContent className="p-6 space-y-6">
+            <Card className="border-0 shadow-none md:border md:shadow-sm bg-transparent md:bg-white">
+              <CardContent className="px-0 md:p-6 space-y-6">
                 {/* Service */}
-                <div className="flex items-start gap-4 pb-4 border-b">
+                <div className="flex items-start gap-4 pb-4 border-b bg-white p-4 rounded-lg md:bg-transparent md:p-0">
                   <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
                     <Package className="h-6 w-6 text-gray-400" />
                   </div>
@@ -1065,7 +1278,7 @@ export function BookingPageClient({
                 </div>
 
                 {/* Guest Info */}
-                <div className="pb-4 border-b">
+                <div className="pb-4 border-b bg-white p-4 rounded-lg md:bg-transparent md:p-0">
                   <h4 className="font-medium mb-2">Guest Information</h4>
                   <div className="text-sm space-y-1">
                     <p>
@@ -1090,7 +1303,7 @@ export function BookingPageClient({
                 </div>
 
                 {/* Pricing Breakdown */}
-                <div className="space-y-2">
+                <div className="space-y-2 bg-white p-4 rounded-lg md:bg-transparent md:p-0">
                   <h4 className="font-medium">Price Breakdown</h4>
                   {selectedVariants.map((sv) => {
                     const variant = selectedService.variants.find(
@@ -1140,23 +1353,31 @@ export function BookingPageClient({
               </CardContent>
             </Card>
 
-            <Button
-              size="lg"
-              className="w-full"
-              onClick={handleProceedToPayment}
-              style={{ backgroundColor: primaryColor }}
-            >
-              Continue to Payment
-              <ChevronRight className="h-4 w-4 ml-2" />
-            </Button>
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-[0_-4px_10px_rgba(0,0,0,0.05)] md:relative md:bottom-auto md:left-auto md:right-auto md:p-0 md:border-0 md:shadow-none z-50 safe-area-bottom">
+              <div className="max-w-4xl mx-auto">
+                <Button
+                  size="lg"
+                  className="w-full text-lg h-12"
+                  onClick={handleProceedToPayment}
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  Continue to Payment
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Step 5: Payment Method Selection */}
         {currentStep === "payment" && selectedService && selectedSlot && (
-          <div className="space-y-6">
-            <Button variant="ghost" onClick={goBack} className="mb-2">
-              <ChevronLeft className="h-4 w-4 mr-1" /> Back
+          <div className="space-y-6 booking-step-content pb-24 md:pb-0">
+            <Button
+              variant="ghost"
+              onClick={goBack}
+              className="mb-2 pl-0 hover:bg-transparent hover:text-primary"
+            >
+              <ChevronLeft className="h-5 w-5 mr-1" /> Back
             </Button>
 
             <div>
@@ -1164,8 +1385,8 @@ export function BookingPageClient({
               <p className="text-gray-500">Choose how you would like to pay</p>
             </div>
 
-            <Card>
-              <CardContent className="p-6">
+            <Card className="border-0 shadow-none md:border md:shadow-sm">
+              <CardContent className="px-0 md:p-6">
                 <div className="space-y-3">
                   {PAYMENT_METHODS.map((method) => {
                     const isSelected = selectedPaymentMethod === method.id;
@@ -1174,8 +1395,8 @@ export function BookingPageClient({
                         key={method.id}
                         onClick={() => setSelectedPaymentMethod(method.id)}
                         className={cn(
-                          "w-full flex items-center gap-4 p-4 border rounded-lg text-left transition-all",
-                          isSelected ? "border-2" : "hover:bg-gray-50",
+                          "w-full flex items-center gap-4 p-4 border rounded-lg text-left transition-all active:scale-[0.99]",
+                          isSelected ? "border-2" : "hover:bg-gray-50 bg-white",
                         )}
                         style={
                           isSelected
@@ -1188,7 +1409,7 @@ export function BookingPageClient({
                       >
                         <div
                           className={cn(
-                            "w-10 h-10 rounded-full flex items-center justify-center",
+                            "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
                             isSelected
                               ? "text-white"
                               : "bg-gray-100 text-gray-600",
@@ -1219,11 +1440,11 @@ export function BookingPageClient({
             </Card>
 
             {/* Order Summary */}
-            <Card>
-              <CardHeader>
+            <Card className="border-0 shadow-none md:border md:shadow-sm bg-gray-50 md:bg-white rounded-lg p-0">
+              <CardHeader className="md:px-6 px-4">
                 <CardTitle className="text-lg">Order Summary</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="space-y-2 md:px-6 px-4">
                 <div className="flex justify-between text-sm">
                   <span>{selectedService.name}</span>
                   <span>{formatPrice(totals.subtotal)}</span>
@@ -1243,26 +1464,29 @@ export function BookingPageClient({
               </CardContent>
             </Card>
 
-            <Button
-              size="lg"
-              className="w-full"
-              onClick={handleSubmitBooking}
-              disabled={isSubmitting || !selectedPaymentMethod}
-              style={{ backgroundColor: primaryColor }}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>Pay {formatPrice(totals.total)}</>
-              )}
-            </Button>
-
-            <p className="text-center text-sm text-gray-500">
-              You will be redirected to complete your payment securely
-            </p>
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-[0_-4px_10px_rgba(0,0,0,0.05)] md:relative md:bottom-auto md:left-auto md:right-auto md:p-0 md:border-0 md:shadow-none z-50 safe-area-bottom">
+              <div className="max-w-4xl mx-auto space-y-2">
+                <Button
+                  size="lg"
+                  className="w-full text-lg h-12"
+                  onClick={handleSubmitBooking}
+                  disabled={isSubmitting || !selectedPaymentMethod}
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>Pay {formatPrice(totals.total)}</>
+                  )}
+                </Button>
+                <p className="text-center text-xs text-gray-500 md:hidden">
+                  Secure payment by Bayarcash
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </main>

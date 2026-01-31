@@ -10,10 +10,10 @@ import {
   Users,
   Phone,
   Mail,
-  Download,
   AlertCircle,
   Timer,
 } from "lucide-react";
+import { ConfirmationActions } from "./client";
 
 interface ConfirmationPageProps {
   params: Promise<{ slug: string }>;
@@ -158,15 +158,25 @@ export default async function ConfirmationPage({
 
         <Card className="mb-6">
           <CardContent className="p-6">
-            {/* Reference Code */}
+            {/* Reference Code with QR */}
             <div className="text-center pb-6 border-b">
-              <p className="text-sm text-gray-500 mb-1">Booking Reference</p>
-              <p className="text-3xl font-mono font-bold text-teal-600">
-                {typedBooking.ref_code}
-              </p>
-              <p className="text-xs text-gray-400 mt-2">
-                Please save this reference for your records
-              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">
+                    Booking Reference
+                  </p>
+                  <p className="text-3xl font-mono font-bold text-teal-600">
+                    {typedBooking.ref_code}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Please save this reference for your records
+                  </p>
+                </div>
+                <ConfirmationActions
+                  bookingId={typedBooking.id}
+                  bookingRef={typedBooking.ref_code}
+                />
+              </div>
             </div>
 
             {/* Booking Details */}
@@ -284,16 +294,12 @@ export default async function ConfirmationPage({
         </Card>
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Link href={`/book/${slug}`} className="flex-1">
-            <Button variant="outline" className="w-full">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Link href={`/book/${slug}`}>
+            <Button variant="outline" className="w-full sm:w-auto">
               Book Another
             </Button>
           </Link>
-          <Button className="flex-1 bg-teal-600 hover:bg-teal-700">
-            <Download className="h-4 w-4 mr-2" />
-            Download Receipt
-          </Button>
         </div>
 
         <p className="text-center text-sm text-gray-500 mt-8">

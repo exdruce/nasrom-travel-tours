@@ -216,10 +216,12 @@ export default async function BookingsPage() {
                     <div className="font-bold text-teal-600">
                       {formatCurrency(booking.total_amount)}
                     </div>
-                    <Button variant="ghost" size="sm" className="mt-1">
-                      View
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
+                    <Link href={`/dashboard/bookings/${booking.id}`}>
+                      <Button variant="ghost" size="sm" className="mt-1">
+                        View
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               ))}

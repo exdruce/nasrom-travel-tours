@@ -3,6 +3,10 @@
   "deno.enablePaths": ["supabase/functions"],
   "deno.lint": true,
   "deno.unstable": [],
+  "css.validate": false,
   "css.lint.unknownAtRules": "ignore",
-  "scss.lint.unknownAtRules": "ignore"
+  "scss.lint.unknownAtRules": "ignore",
+  "files.associations": {
+    "*.css": "tailwindcss"
+  }
 }
