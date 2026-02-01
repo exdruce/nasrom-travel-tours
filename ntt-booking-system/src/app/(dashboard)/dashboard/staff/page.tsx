@@ -1,61 +1,76 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Users, UserPlus, Lock, Mail } from "lucide-react";
+import { Suspense } from "react";
+import { getStaffMembers } from "@/app/actions/staff";
+import { StaffClient } from "./staff-client";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { Users } from "lucide-react";
 
-export default function StaffPage() {
+export default async function StaffPage() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  // Get current user profile for role check
+  const { data: currentUserProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (
+    !currentUserProfile ||
+    (currentUserProfile.role !== "admin" && currentUserProfile.role !== "owner")
+  ) {
+    // Optionally redirect or show unauthorized message
+    // For now we assume if they can access the route via middleware/layout, they might see it,
+    // but we can enforce strict check here.
+    // If we want to allow 'staff' to see the list but not edit, we can allow it.
+    // typically staff can see other staff.
+  }
+
+  const { data: staffMembers, error } = await getStaffMembers();
+
+  if (error) {
+    return <div className="p-6 text-red-500">Error loading staff: {error}</div>;
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Staff</h2>
-          <p className="text-gray-500">Manage your team members</p>
-        </div>
-        <Button disabled>
-          <UserPlus className="h-4 w-4 mr-2" />
-          Invite Staff
-        </Button>
+      <div className="flex flex-col gap-2">
+        <h2 className="text-3xl font-bold tracking-tight">Staff Management</h2>
+        <p className="text-gray-500">
+          Manage your team members and their permissions.
+        </p>
       </div>
 
-      <Card>
-        <CardContent className="py-16">
-          <div className="flex flex-col items-center justify-center text-center">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-              <Users className="h-10 w-10 text-gray-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Staff Management Coming Soon
-            </h3>
-            <p className="text-gray-500 max-w-md mb-6">
-              Soon you'll be able to invite team members to help manage your
-              business, assign roles, and control permissions.
-            </p>
-
-            <div className="grid md:grid-cols-3 gap-4 w-full max-w-2xl">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <UserPlus className="h-6 w-6 text-teal-600 mx-auto mb-2" />
-                <h4 className="font-medium text-sm">Invite Members</h4>
-                <p className="text-xs text-gray-500 mt-1">
-                  Add staff via email invitation
-                </p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <Lock className="h-6 w-6 text-teal-600 mx-auto mb-2" />
-                <h4 className="font-medium text-sm">Role Permissions</h4>
-                <p className="text-xs text-gray-500 mt-1">
-                  Control what each role can access
-                </p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <Mail className="h-6 w-6 text-teal-600 mx-auto mb-2" />
-                <h4 className="font-medium text-sm">Notifications</h4>
-                <p className="text-xs text-gray-500 mt-1">
-                  Staff get notified of bookings
-                </p>
-              </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+          <div className="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+            <h3 className="tracking-tight text-sm font-medium">Total Staff</h3>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div className="p-6 pt-0">
+            <div className="text-2xl font-bold">
+              {staffMembers?.length || 0}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        {/* Add more stats if available, e.g. "Admins", "Active Now" */}
+      </div>
+
+      <Suspense fallback={<div>Loading staff list...</div>}>
+        <StaffClient
+          initialStaff={staffMembers || []}
+          currentUserRole={currentUserProfile?.role}
+          currentUserId={user.id}
+        />
+      </Suspense>
     </div>
   );
 }
