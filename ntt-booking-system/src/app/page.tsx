@@ -23,6 +23,18 @@ export default function Home() {
         </div>
 
         <div className="space-y-4">
+          <Link
+            href="https://book.jetitokbali.com/book/nasrom-travel-tours"
+            className="block w-full"
+            target="_blank"
+          >
+            <Button
+              size="lg"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-lg h-12"
+            >
+              Book Now (Demo)
+            </Button>
+          </Link>
           <Link href="/login" className="block w-full">
             <Button
               size="lg"

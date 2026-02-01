@@ -124,7 +124,7 @@ export default async function DashboardPage() {
       currency: "MYR",
     }).format(amount);
 
-  const bookingUrl = `/book/${business.slug}`;
+  const bookingUrl = "https://book.jetitokbali.com/book/nasrom-travel-tours";
 
   const stats = [
     {
@@ -208,9 +208,7 @@ export default async function DashboardPage() {
                 </p>
                 <div className="flex items-center gap-2">
                   <code className="bg-white px-3 py-1.5 rounded border text-sm font-mono">
-                    {typeof window !== "undefined"
-                      ? `${window.location.origin}${bookingUrl}`
-                      : bookingUrl}
+                    {bookingUrl}
                   </code>
                   <Badge
                     className={
