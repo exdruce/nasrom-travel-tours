@@ -125,7 +125,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Build return URL
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const protocol = request.headers.get("x-forwarded-proto") || "http";
+    const host = request.headers.get("host");
+    const appUrl = host
+      ? `${protocol}://${host}`
+      : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const returnUrl = `${appUrl}/api/bayarcash/return?payment_id=${paymentId}`;
 
     // Create payment intent with Bayarcash

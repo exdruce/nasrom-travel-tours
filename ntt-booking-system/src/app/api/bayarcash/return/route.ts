@@ -132,7 +132,11 @@ async function handleReturn(request: NextRequest) {
 
   console.log("Booking info:", { businessSlug, refCode });
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const protocol = request.headers.get("x-forwarded-proto") || "http";
+  const host = request.headers.get("host");
+  const appUrl = host
+    ? `${protocol}://${host}`
+    : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   // If payment is pending/processing, try to update status
   if (payment.status === "pending" || payment.status === "processing") {
