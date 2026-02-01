@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   StaffMember,
@@ -86,15 +86,21 @@ interface StaffClientProps {
 
 // Assuming 'manager' isn't in our core types yet based on previous file, but generic UserRole is.
 // Let's stick to the types we saw: admin, owner, staff.
+// We explicitly list the roles to satisfy the enum requirement
+const ROLES = ["admin", "owner", "staff"] as const;
+
 const roleSchema = z
-  .enum(["admin", "owner", "staff"] as [string, ...string[]])
+  .enum(ROLES)
+  // We don't really need transform if inputs are strictly controlled, but let's keep simple
   .transform((val) => val as UserRole);
 
 const formSchema = z.object({
   email: z.string().email("Invalid email address"),
   full_name: z.string().min(2, "Name must be at least 2 characters"),
-  role: roleSchema,
+  role: z.enum(ROLES), // Use the enum directly for the form schema to avoid inferred string mismatch
 });
+
+type FormValues = z.infer<typeof formSchema>;
 
 export function StaffClient({
   initialStaff,
@@ -105,12 +111,18 @@ export function StaffClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isPending, setIsPending] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
+
+  // Prevent hydration mismatch for Radix primitives
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const canManageAttributes =
     currentUserRole === "admin" || currentUserRole === "owner";
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
@@ -203,6 +215,10 @@ export function StaffClient({
         return <User className="h-3 w-3 mr-1" />;
     }
   };
+
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <div className="space-y-6">
@@ -451,7 +467,7 @@ export function StaffClient({
                     {member.phone || "-"}
                   </TableCell>
                   <TableCell className="text-gray-500 text-sm">
-                    {new Date(member.created_at).toLocaleDateString()}
+                    {new Date(member.created_at).toLocaleDateString("en-GB")}
                   </TableCell>
 
                   {canManageAttributes && (

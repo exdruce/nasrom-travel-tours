@@ -52,11 +52,14 @@ export async function inviteStaff(data: {
   // 1. Authorization check
   if (!user) return { error: "Unauthorized" };
 
-  const { data: currentUserProfile } = await supabase
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const { data: profile } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
+
+  const currentUserProfile = profile as { role: string } | null;
 
   if (
     !currentUserProfile ||
@@ -116,11 +119,14 @@ export async function updateStaffRole(userId: string, newRole: UserRole) {
   if (!user) return { error: "Unauthorized" };
 
   // Auth check
-  const { data: currentUserProfile } = await supabase
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const { data: profile } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
+
+  const currentUserProfile = profile as { role: string } | null;
 
   if (
     !currentUserProfile ||
@@ -131,9 +137,9 @@ export async function updateStaffRole(userId: string, newRole: UserRole) {
 
   // Prevent removing last owner if needed (complex logic, skipping for now but keep in mind)
 
-  const { error } = await supabase
-    .from("profiles")
-    .update({ role: newRole, updated_at: new Date().toISOString() } as any)
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const { error } = await (supabase.from("profiles") as any)
+    .update({ role: newRole, updated_at: new Date().toISOString() })
     .eq("id", userId);
 
   if (error) return { error: error.message };
@@ -151,11 +157,14 @@ export async function removeStaff(userId: string) {
   if (!user) return { error: "Unauthorized" };
 
   // Auth check
-  const { data: currentUserProfile } = await supabase
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const { data: profile } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
+
+  const currentUserProfile = profile as { role: string } | null;
 
   if (
     !currentUserProfile ||

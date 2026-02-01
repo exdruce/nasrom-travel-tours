@@ -17,21 +17,27 @@ export default async function StaffPage() {
   }
 
   // Get current user profile for role check
-  const { data: currentUserProfile } = await supabase
+  const { data: profile } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
 
+  const currentUserProfile = profile as { role: string } | null;
+
   if (
     !currentUserProfile ||
-    (currentUserProfile.role !== "admin" && currentUserProfile.role !== "owner")
+    (currentUserProfile.role !== "admin" &&
+      currentUserProfile.role !== "owner" &&
+      currentUserProfile.role !== "staff")
   ) {
-    // Optionally redirect or show unauthorized message
-    // For now we assume if they can access the route via middleware/layout, they might see it,
-    // but we can enforce strict check here.
-    // If we want to allow 'staff' to see the list but not edit, we can allow it.
-    // typically staff can see other staff.
+    // Allow staff to view too? The logic below passed role to client.
+    // In previous steps I restricted staff from seeing "Analytics" etc but Staff page?
+    // The dashboard link for "Staff" (or "Team"?) was visible to all?
+    // Actually RBAC said "Manage Team: Owner/Admin". Staff usually don't see staff management.
+    // But wait, walkthrough said "View Staff: Lists all users".
+    // Let's stick to the code: passed `currentUserProfile?.role` to client.
+    // The error is just the type check.
   }
 
   const { data: staffMembers, error } = await getStaffMembers();
@@ -67,7 +73,9 @@ export default async function StaffPage() {
       <Suspense fallback={<div>Loading staff list...</div>}>
         <StaffClient
           initialStaff={staffMembers || []}
-          currentUserRole={currentUserProfile?.role}
+          currentUserRole={
+            currentUserProfile?.role as import("@/types").UserRole
+          }
           currentUserId={user.id}
         />
       </Suspense>

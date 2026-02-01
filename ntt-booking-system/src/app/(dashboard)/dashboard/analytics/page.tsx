@@ -24,6 +24,22 @@ export default async function AnalyticsPage() {
 
   if (!businessData) redirect("/onboarding");
 
+  // Check role permission
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const userProfile = profile as { role: string } | null;
+
+  if (
+    !userProfile ||
+    (userProfile.role !== "admin" && userProfile.role !== "owner")
+  ) {
+    redirect("/dashboard");
+  }
+
   const business = businessData as { id: string };
 
   // Get basic stats

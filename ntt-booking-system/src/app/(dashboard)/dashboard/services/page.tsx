@@ -40,6 +40,31 @@ export default async function ServicesPage() {
     return null;
   }
 
+  // Check role permission
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const userProfile = profile as { role: string } | null;
+
+  if (
+    !userProfile ||
+    (userProfile.role !== "admin" && userProfile.role !== "owner")
+  ) {
+    // Staff should not access service management
+    // Redirect to dashboard or maybe a "view only" page if needed, but per plan redirect to dashboard
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+        <h2 className="text-xl font-bold text-red-600">Access Denied</h2>
+        <p className="text-gray-600 mt-2">
+          You do not have permission to manage services.
+        </p>
+      </div>
+    );
+  }
+
   // Get services for this business
   const { data: servicesData } = await supabase
     .from("services")

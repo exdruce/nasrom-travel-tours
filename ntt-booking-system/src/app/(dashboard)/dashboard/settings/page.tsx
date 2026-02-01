@@ -26,5 +26,14 @@ export default async function SettingsPage() {
 
   if (!business) redirect("/onboarding");
 
+  // Check role permission - Settings is restricted for staff
+  const userProfile = profile as { role: string } | null; // profile is already fetched above
+  if (
+    !userProfile ||
+    (userProfile.role !== "admin" && userProfile.role !== "owner")
+  ) {
+    redirect("/dashboard");
+  }
+
   return <SettingsPageClient business={business} profile={profile} />;
 }
