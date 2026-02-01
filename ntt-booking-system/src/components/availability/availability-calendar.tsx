@@ -16,8 +16,9 @@ interface AvailabilityCalendarProps {
   onDateSelect: (date: string) => void;
   onAddSlot: () => void;
   selectedDate: string | null;
-  initialYear: number;
-  initialMonth: number;
+  currentYear: number;
+  currentMonth: number;
+  onMonthChange: (year: number, month: number) => void;
 }
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -41,11 +42,10 @@ export function AvailabilityCalendar({
   onDateSelect,
   onAddSlot,
   selectedDate,
-  initialYear,
-  initialMonth,
+  currentYear,
+  currentMonth,
+  onMonthChange,
 }: AvailabilityCalendarProps) {
-  const [currentMonth, setCurrentMonth] = useState(initialMonth);
-  const [currentYear, setCurrentYear] = useState(initialYear);
   const [todayStr, setTodayStr] = useState("");
 
   // Group availability by date
@@ -127,32 +127,29 @@ export function AvailabilityCalendar({
 
   const goToToday = () => {
     const now = new Date();
-    setCurrentMonth(now.getMonth() + 1);
-    setCurrentYear(now.getFullYear());
+    onMonthChange(now.getFullYear(), now.getMonth() + 1);
   };
 
   const prevMonth = () => {
     if (currentMonth === 1) {
-      setCurrentMonth(12);
-      setCurrentYear(currentYear - 1);
+      onMonthChange(currentYear - 1, 12);
     } else {
-      setCurrentMonth(currentMonth - 1);
+      onMonthChange(currentYear, currentMonth - 1);
     }
   };
 
   const nextMonth = () => {
     if (currentMonth === 12) {
-      setCurrentMonth(1);
-      setCurrentYear(currentYear + 1);
+      onMonthChange(currentYear + 1, 1);
     } else {
-      setCurrentMonth(currentMonth + 1);
+      onMonthChange(currentYear, currentMonth + 1);
     }
   };
 
   return (
-    <div className="bg-white rounded-lg border shadow-sm">
+    <div className="bg-white rounded-lg border shadow-sm flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-b space-y-4 sm:space-y-0">
         <div className="flex items-center gap-4">
           <h2 className="text-lg font-semibold">
             {MONTHS[currentMonth - 1]} {currentYear}
@@ -167,27 +164,41 @@ export function AvailabilityCalendar({
             <Button
               variant="outline"
               size="sm"
-              className="ml-2"
+              className="ml-2 hidden sm:inline-flex"
               onClick={goToToday}
             >
               Today
             </Button>
           </div>
         </div>
-        <Button onClick={onAddSlot} className="bg-teal-600 hover:bg-teal-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Availability
-        </Button>
+        <div className="flex w-full sm:w-auto gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="sm:hidden flex-1"
+            onClick={goToToday}
+          >
+            Today
+          </Button>
+          <Button
+            onClick={onAddSlot}
+            className="bg-teal-600 hover:bg-teal-700 flex-1 sm:flex-none"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            <span className="sm:inline">Add Availability</span>
+            <span className="sm:hidden">Add</span>
+          </Button>
+        </div>
       </div>
 
       {/* Calendar Grid */}
-      <div className="p-4">
+      <div className="p-2 sm:p-4 bg-muted/20 flex-1">
         {/* Day headers */}
         <div className="grid grid-cols-7 gap-1 mb-2">
           {DAYS.map((day) => (
             <div
               key={day}
-              className="text-center text-sm font-medium text-gray-500 py-2"
+              className="text-center text-xs sm:text-sm font-medium text-muted-foreground py-2"
             >
               {day}
             </div>
@@ -195,7 +206,7 @@ export function AvailabilityCalendar({
         </div>
 
         {/* Date cells */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1 auto-rows-fr">
           {calendarDays.map((day, index) => {
             const slotInfo = slotsByDate[day.dateStr];
             const isToday = day.dateStr === todayStr;
@@ -208,57 +219,86 @@ export function AvailabilityCalendar({
                 onClick={() => day.isCurrentMonth && onDateSelect(day.dateStr)}
                 disabled={!day.isCurrentMonth}
                 className={cn(
-                  "relative p-2 h-24 text-left border rounded-lg transition-colors",
+                  "relative p-1 sm:p-2 flex flex-col items-center sm:items-start text-left border rounded-lg transition-all hover:shadow-md",
+                  // Height: Auto on mobile (min-h), Fixed on desktop
+                  "min-h-12 sm:min-h-24 aspect-square sm:aspect-auto",
                   day.isCurrentMonth
                     ? "bg-white hover:bg-gray-50"
-                    : "bg-gray-50 text-gray-400 cursor-not-allowed",
-                  isToday && "ring-2 ring-teal-500",
-                  isSelected && "bg-teal-50 border-teal-500",
+                    : "bg-gray-50/50 text-muted-foreground/30 cursor-not-allowed border-transparent",
+                  isToday && "ring-2 ring-teal-500 z-10",
+                  isSelected &&
+                    "bg-teal-50 border-teal-500 ring-1 ring-teal-500 z-10",
                   slotInfo?.blocked && "bg-red-50 border-red-200",
-                  isPast && day.isCurrentMonth && "bg-gray-100",
+                  isPast &&
+                    day.isCurrentMonth &&
+                    "bg-gray-100/50 text-muted-foreground",
                 )}
               >
-                <span
-                  className={cn(
-                    "text-sm font-medium",
-                    isToday && "text-teal-600",
-                    slotInfo?.blocked && "text-red-600",
+                <div className="flex justify-between w-full items-start">
+                  <span
+                    className={cn(
+                      "text-xs sm:text-sm font-medium rounded-full w-6 h-6 flex items-center justify-center",
+                      isToday && "bg-teal-600 text-white",
+                      slotInfo?.blocked && !isToday && "text-red-600",
+                    )}
+                  >
+                    {day.date}
+                  </span>
+                  {/* Mobile Dot Indicator */}
+                  {slotInfo && day.isCurrentMonth && (
+                    <div
+                      className={cn(
+                        "w-1.5 h-1.5 rounded-full sm:hidden absolute top-2 right-2",
+                        slotInfo.blocked
+                          ? "bg-red-500"
+                          : slotInfo.booked >= slotInfo.capacity &&
+                              slotInfo.capacity > 0
+                            ? "bg-red-500"
+                            : slotInfo.booked > 0
+                              ? "bg-amber-500"
+                              : "bg-green-500",
+                      )}
+                    />
                   )}
-                >
-                  {day.date}
-                </span>
+                </div>
 
                 {slotInfo && day.isCurrentMonth && (
-                  <div className="mt-1 space-y-1">
+                  <div className="mt-1 w-full hidden sm:block">
                     {slotInfo.blocked ? (
-                      <span className="text-xs text-red-600 font-medium">
+                      <div className="text-xs text-red-600 font-medium bg-red-100/50 px-1 py-0.5 rounded text-center">
                         Blocked
-                      </span>
+                      </div>
                     ) : (
-                      <>
-                        <div className="flex items-center gap-1">
-                          <CalendarIcon className="h-3 w-3 text-gray-400" />
-                          <span className="text-xs text-gray-600">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1 text-xs text-gray-600">
+                          <CalendarIcon className="h-3 w-3 text-muted-foreground" />
+                          <span>
                             {slotInfo.total} slot{slotInfo.total > 1 ? "s" : ""}
                           </span>
                         </div>
                         {slotInfo.capacity > 0 && (
-                          <div className="text-xs">
-                            <span
+                          <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                            <div
                               className={cn(
-                                "font-medium",
+                                "h-full rounded-full",
                                 slotInfo.booked >= slotInfo.capacity
-                                  ? "text-red-600"
+                                  ? "bg-red-500"
                                   : slotInfo.booked > 0
-                                    ? "text-amber-600"
-                                    : "text-green-600",
+                                    ? "bg-amber-500"
+                                    : "bg-green-500",
                               )}
-                            >
-                              {slotInfo.booked}/{slotInfo.capacity}
-                            </span>
+                              style={{
+                                width: `${Math.min((slotInfo.booked / slotInfo.capacity) * 100, 100)}%`,
+                              }}
+                            />
                           </div>
                         )}
-                      </>
+                        {slotInfo.capacity > 0 && (
+                          <div className="text-[10px] text-muted-foreground text-right">
+                            {slotInfo.booked}/{slotInfo.capacity}
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
@@ -269,17 +309,17 @@ export function AvailabilityCalendar({
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 px-4 pb-4 text-xs text-gray-500">
+      <div className="flex flex-wrap items-center gap-4 p-4 text-xs text-muted-foreground border-t bg-gray-50/50">
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-green-100 border border-green-300" />
+          <div className="w-3 h-3 rounded bg-green-500" />
           <span>Available</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-amber-100 border border-amber-300" />
-          <span>Partial</span>
+          <div className="w-3 h-3 rounded bg-amber-500" />
+          <span>Filling Fast</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-red-100 border border-red-300" />
+          <div className="w-3 h-3 rounded bg-red-500" />
           <span>Full/Blocked</span>
         </div>
       </div>

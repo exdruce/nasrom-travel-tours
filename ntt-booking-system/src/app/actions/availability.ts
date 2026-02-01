@@ -123,8 +123,10 @@ export async function createTimeSlot(formData: FormData) {
   const businessId = await getBusinessId();
   const supabase = await createClient();
 
+  const serviceIdInput = formData.get("service_id");
   const rawData = {
-    service_id: formData.get("service_id") || null,
+    service_id:
+      serviceIdInput === "all" || serviceIdInput === "" ? null : serviceIdInput,
     date: formData.get("date") as string,
     start_time: formData.get("start_time") as string,
     end_time: formData.get("end_time") as string,
@@ -324,8 +326,10 @@ export async function updateTimeSlot(slotId: string, formData: FormData) {
   const supabase = await createClient();
   const businessId = await getBusinessId();
 
+  const serviceIdInput = formData.get("service_id");
   const rawData = {
-    service_id: formData.get("service_id") || null,
+    service_id:
+      serviceIdInput === "all" || serviceIdInput === "" ? null : serviceIdInput,
     date: formData.get("date") as string,
     start_time: formData.get("start_time") as string,
     end_time: formData.get("end_time") as string,
