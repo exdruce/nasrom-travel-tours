@@ -2,7 +2,7 @@
 
 import { BookingQRCode } from "@/components/booking/BookingQRCode";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, Ticket } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -15,35 +15,54 @@ export function ConfirmationActions({
   bookingId,
   bookingRef,
 }: ConfirmationActionsProps) {
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadingType, setDownloadingType] = useState<
+    "receipt" | "ticket" | null
+  >(null);
 
-  const handleDownloadReceipt = async () => {
-    setIsDownloading(true);
+  const handleDownload = async (type: "receipt" | "ticket") => {
+    setDownloadingType(type);
     try {
-      // Use a hidden iframe to trigger download with proper filename from server
-      // This approach respects the Content-Disposition header from the server
-      const iframe = document.createElement("iframe");
-      iframe.style.display = "none";
-      document.body.appendChild(iframe);
+      // Fetch the PDF from the API
+      const response = await fetch(`/api/${type}/${bookingId}`);
 
-      // Set the iframe src to the receipt API endpoint
-      // The server returns Content-Disposition: attachment; filename="receipt-xxx.pdf"
-      iframe.src = `/api/receipt/${bookingId}`;
+      if (!response.ok) {
+        throw new Error(`Failed to generate ${type}`);
+      }
 
-      // Cleanup after download starts
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-      }, 5000);
+      // Get the blob data
+      const blob = await response.blob();
 
-      toast.success("Receipt downloaded successfully!");
+      // Extract filename from Content-Disposition header, fallback to ref code
+      const contentDisposition = response.headers.get("Content-Disposition");
+      let filename = `${type}-${bookingRef}.pdf`;
+
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Create a download link and trigger download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success(
+        `${type.charAt(0).toUpperCase() + type.slice(1)} downloaded successfully!`,
+      );
     } catch (error) {
       console.error("Download error:", error);
-      toast.error("Failed to download receipt. Please try again.");
+      toast.error(`Failed to download ${type}. Please try again.`);
     } finally {
-      // Add a small delay before re-enabling the button
-      setTimeout(() => {
-        setIsDownloading(false);
-      }, 1000);
+      setDownloadingType(null);
     }
   };
 
@@ -57,24 +76,35 @@ export function ConfirmationActions({
         </p>
       </div>
 
-      {/* Download Button */}
-      <Button
-        onClick={handleDownloadReceipt}
-        disabled={isDownloading}
-        className="bg-teal-600 hover:bg-teal-700"
-      >
-        {isDownloading ? (
-          <>
+      <div className="flex gap-3 w-full max-w-xs">
+        {/* Ticket Button */}
+        <Button
+          onClick={() => handleDownload("ticket")}
+          disabled={downloadingType === "ticket"}
+          className="flex-1 bg-gray-900 hover:bg-gray-800 text-white"
+        >
+          {downloadingType === "ticket" ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Generating...
-          </>
-        ) : (
-          <>
+          ) : (
+            <Ticket className="h-4 w-4 mr-2" />
+          )}
+          Ticket
+        </Button>
+
+        {/* Receipt Button */}
+        <Button
+          onClick={() => handleDownload("receipt")}
+          disabled={downloadingType === "receipt"}
+          className="flex-1 bg-teal-600 hover:bg-teal-700 text-white"
+        >
+          {downloadingType === "receipt" ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
             <Download className="h-4 w-4 mr-2" />
-            Download Receipt
-          </>
-        )}
-      </Button>
+          )}
+          Receipt
+        </Button>
+      </div>
     </div>
   );
 }

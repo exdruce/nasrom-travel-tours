@@ -30,6 +30,7 @@ import {
   Loader2,
   CreditCard,
   User,
+  Ticket,
 } from "lucide-react";
 import { toast } from "sonner";
 import { updateBookingStatus } from "@/app/actions/bookings";
@@ -215,8 +216,55 @@ export function BookingDetailClient({
     window.open(`/api/manifest/${booking.id}`, "_blank");
   };
 
-  const handleDownloadReceipt = () => {
-    window.open(`/api/receipt/${booking.id}`, "_blank");
+  const [downloadingType, setDownloadingType] = useState<
+    "receipt" | "ticket" | null
+  >(null);
+
+  const handleDownload = async (type: "receipt" | "ticket") => {
+    setDownloadingType(type);
+    try {
+      // Fetch the PDF from the API
+      const response = await fetch(`/api/${type}/${booking.id}`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate ${type}`);
+      }
+
+      // Get the blob data
+      const blob = await response.blob();
+
+      // Extract filename from Content-Disposition header, fallback to ref code
+      const contentDisposition = response.headers.get("Content-Disposition");
+      let filename = `${type}-${booking.ref_code}.pdf`;
+
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Create a download link and trigger download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success(
+        `${type.charAt(0).toUpperCase() + type.slice(1)} downloaded successfully!`,
+      );
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error(`Failed to download ${type}. Please try again.`);
+    } finally {
+      setDownloadingType(null);
+    }
   };
 
   return (
@@ -534,14 +582,36 @@ export function BookingDetailClient({
               <hr />
 
               {/* Download Actions */}
-              <Button
-                variant="outline"
-                onClick={handleDownloadReceipt}
-                className="w-full"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download Receipt
-              </Button>
+              {/* Download Actions */}
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => handleDownload("ticket")}
+                  disabled={downloadingType === "ticket"}
+                  className="w-full"
+                >
+                  {downloadingType === "ticket" ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Ticket className="h-4 w-4 mr-2" />
+                  )}
+                  Ticket
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => handleDownload("receipt")}
+                  disabled={downloadingType === "receipt"}
+                  className="w-full"
+                >
+                  {downloadingType === "receipt" ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-2" />
+                  )}
+                  Receipt
+                </Button>
+              </div>
 
               <Button
                 variant="outline"
