@@ -55,8 +55,8 @@ const Navbar: React.FC = () => {
       className={cn(
         "fixed w-full z-50 transition-all duration-500",
         scrolled
-          ? "bg-gradient-to-b from-brand-teal/90 via-brand-teal/60 to-transparent backdrop-blur-sm py-3"
-          : "bg-gradient-to-b from-brand-teal/90 via-brand-teal/50 to-transparent py-5",
+          ? "bg-linear-to-b from-brand-teal/90 via-brand-teal/60 to-transparent backdrop-blur-sm py-3"
+          : "bg-linear-to-b from-brand-teal/90 via-brand-teal/50 to-transparent py-5",
       )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -95,14 +95,22 @@ const Navbar: React.FC = () => {
                 {i18n.language.toUpperCase()}
               </span>
             </button>
-            <Link to="/contact">
+            {/* <Link to="/contact">
               <Button
                 size="sm"
                 className="bg-brand-orange hover:bg-orange-500 text-white font-semibold border-none shadow-lg shadow-brand-orange/20 rounded-full px-6 transition-all hover:scale-105"
               >
                 {t("nav.bookNow")}
               </Button>
-            </Link>
+            </Link> */}
+            <a href="https://book.jetitokbali.com/book/nasrom-travel-tours">
+              <Button
+                size="sm"
+                className="bg-brand-orange hover:bg-orange-500 text-white font-semibold border-none shadow-lg shadow-brand-orange/20 rounded-full px-6 transition-all hover:scale-105"
+              >
+                {t("nav.bookNow")}
+              </Button>
+            </a>
           </div>
 
           {/* Mobile Actions & Menu Toggle */}
@@ -154,7 +162,7 @@ const Navbar: React.FC = () => {
             </Link>
           ))}
           <div className="pt-3 mt-2 border-t border-white/10 w-full px-1">
-            <Link
+            {/* <Link
               to="/contact"
               className="block w-full"
               onClick={() => setIsOpen(false)}
@@ -165,7 +173,19 @@ const Navbar: React.FC = () => {
               >
                 {t("nav.bookNow")}
               </Button>
-            </Link>
+            </Link> */}
+            <a
+              href="https://book.jetitokbali.com/book/nasrom-travel-tours"
+              className="block w-full"
+              onClick={() => setIsOpen(false)}
+            >
+              <Button
+                fullWidth
+                className="bg-brand-orange hover:bg-orange-500 text-white font-bold border-none shadow-lg shadow-brand-orange/20 rounded-full py-6 transition-all active:scale-95"
+              >
+                {t("nav.bookNow")}
+              </Button>
+            </a>
           </div>
         </div>
       </div>

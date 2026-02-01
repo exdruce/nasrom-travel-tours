@@ -117,7 +117,7 @@ const Packages: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-8 flex-grow flex flex-col">
+              <div className="p-8 grow flex flex-col">
                 <div className="mb-6">
                   <p className="text-xs text-brand-teal font-bold uppercase tracking-widest mb-2">
                     {pkg.duration}
@@ -138,7 +138,7 @@ const Packages: React.FC = () => {
                   <span className="text-xs text-gray-500 ml-1">/pax</span>
                 </div>
 
-                <ul className="space-y-4 mb-10 flex-grow">
+                <ul className="space-y-4 mb-10 grow">
                   {pkg.features.map((feature, idx) => (
                     <li
                       key={idx}
@@ -152,7 +152,7 @@ const Packages: React.FC = () => {
                   ))}
                 </ul>
 
-                <Link to="/contact" className="mt-auto">
+                {/* <Link to="/contact" className="mt-auto">
                   <Button
                     variant="outline"
                     fullWidth
@@ -160,7 +160,19 @@ const Packages: React.FC = () => {
                   >
                     Book Package
                   </Button>
-                </Link>
+                </Link> */}
+                <a
+                  href="https://book.jetitokbali.com/book/nasrom-travel-tours"
+                  className="mt-auto"
+                >
+                  <Button
+                    variant="outline"
+                    fullWidth
+                    className="group hover:bg-brand-teal hover:border-brand-teal hover:text-white py-3 rounded-xl border-2 font-bold text-xs tracking-widest"
+                  >
+                    Book Package
+                  </Button>
+                </a>
               </div>
             </div>
           ))}

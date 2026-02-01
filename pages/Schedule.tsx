@@ -13,7 +13,7 @@ const Schedule: React.FC = () => {
   return (
     <div className="bg-gray-50 min-h-screen pt-24 pb-20 relative overflow-hidden">
       {/* Background Decorative Elements */}
-      <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-teal-50 to-transparent -z-10" />
+      <div className="absolute top-0 left-0 w-full h-96 bg-linear-to-b from-teal-50 to-transparent -z-10" />
       <div className="absolute top-20 right-0 w-64 h-64 bg-brand-orange/5 rounded-full blur-3xl -z-10" />
       <div className="absolute top-40 left-10 w-72 h-72 bg-brand-teal/5 rounded-full blur-3xl -z-10" />
 
@@ -33,10 +33,10 @@ const Schedule: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Weather Alert - Modernized */}
         <div className="bg-white border-l-4 border-yellow-400 p-6 mb-12 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col md:flex-row items-start md:items-center gap-4">
-          <div className="bg-yellow-100 p-3 rounded-full flex-shrink-0">
+          <div className="bg-yellow-100 p-3 rounded-full shrink-0">
             <AlertTriangle className="w-6 h-6 text-yellow-600" />
           </div>
-          <div className="flex-grow">
+          <div className="grow">
             <h4 className="font-bold text-navy text-lg mb-1">
               Monsoon Season Update
             </h4>
@@ -228,7 +228,7 @@ const Schedule: React.FC = () => {
                       key={idx}
                       className="flex items-start bg-gray-50 p-4 rounded-xl"
                     >
-                      <div className="w-2 h-2 bg-brand-orange rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                      <div className="w-2 h-2 bg-brand-orange rounded-full mt-2 mr-3 shrink-0"></div>
                       <p className="text-gray-600 text-sm md:text-base leading-relaxed">
                         {info}
                       </p>
@@ -246,7 +246,7 @@ const Schedule: React.FC = () => {
             }
           >
             <div
-              className={`rounded-3xl shadow-2xl p-8 md:p-10 text-white relative overflow-hidden h-full flex flex-col transition-all duration-500 ${activeTab === "Perhentian" ? "bg-gradient-to-br from-brand-teal to-brand-dark" : "bg-navy"}`}
+              className={`rounded-3xl shadow-2xl p-8 md:p-10 text-white relative overflow-hidden h-full flex flex-col transition-all duration-500 ${activeTab === "Perhentian" ? "bg-linear-to-br from-brand-teal to-brand-dark" : "bg-navy"}`}
             >
               <div className="absolute top-0 right-0 -mr-24 -mt-24 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
               <div className="absolute bottom-0 left-0 -ml-24 -mb-24 w-56 h-56 bg-brand-orange/20 rounded-full blur-3xl"></div>
@@ -265,7 +265,7 @@ const Schedule: React.FC = () => {
                     </p>
                   </div>
 
-                  <div className="space-y-4 relative z-10 flex-grow">
+                  <div className="space-y-4 relative z-10 grow">
                     {[
                       {
                         label: "Dewasa (Pergi & Balik)",
@@ -299,7 +299,7 @@ const Schedule: React.FC = () => {
                   </div>
 
                   <div className="mt-10 pt-8 border-t border-white/10 relative z-10">
-                    <Link to="/contact" className="block w-full">
+                    {/* <Link to="/contact" className="block w-full">
                       <Button
                         variant="primary"
                         fullWidth
@@ -307,7 +307,19 @@ const Schedule: React.FC = () => {
                       >
                         Book Tickets Now
                       </Button>
-                    </Link>
+                    </Link> */}
+                    <a
+                      href="https://book.jetitokbali.com/book/nasrom-travel-tours"
+                      className="block w-full"
+                    >
+                      <Button
+                        variant="primary"
+                        fullWidth
+                        className="bg-brand-orange text-white hover:bg-white hover:text-brand-orange border-none py-4 text-base font-bold shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300"
+                      >
+                        Book Tickets Now
+                      </Button>
+                    </a>
                     <p className="text-center text-xs text-teal-100/60 mt-4">
                       *Prices subject to seasonal surcharge
                     </p>

@@ -51,7 +51,7 @@ const Home: React.FC = () => {
             className="w-full h-full object-cover scale-105 animate-slow-zoom"
           />
           {/* Updated gradient to use brand teal */}
-          <div className="absolute inset-0 bg-gradient-to-b from-brand-teal/70 via-navy/30 to-navy/90" />
+          <div className="absolute inset-0 bg-linear-to-b from-brand-teal/70 via-navy/30 to-navy/90" />
         </div>
 
         <div
@@ -74,14 +74,22 @@ const Home: React.FC = () => {
             {t("hero.description")}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
-            <Link to="/contact">
+            {/* <Link to="/contact">
               <Button
                 size="lg"
                 className="min-w-[220px] shadow-2xl hover:-translate-y-1 text-base py-4 rounded-xl"
               >
                 {t("hero.ctaPrimary")}
               </Button>
-            </Link>
+            </Link> */}
+            <a href="https://book.jetitokbali.com/book/nasrom-travel-tours">
+              <Button
+                size="lg"
+                className="min-w-[220px] shadow-2xl hover:-translate-y-1 text-base py-4 rounded-xl"
+              >
+                {t("hero.ctaPrimary")}
+              </Button>
+            </a>
             <Link to="/schedule">
               <Button
                 variant="outline"
@@ -102,7 +110,7 @@ const Home: React.FC = () => {
 
       {/* Stats Section */}
       <section className="bg-navy py-16 border-t border-white/5 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-teal via-brand-orange to-brand-teal opacity-80"></div>
+        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-brand-teal via-brand-orange to-brand-teal opacity-80"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 divide-y md:divide-y-0 md:divide-x divide-white/10">
             {stats.map((stat, idx) => (
@@ -308,11 +316,16 @@ const Home: React.FC = () => {
             or our inquiry form.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-5">
-            <Link to="/contact">
+            {/* <Link to="/contact">
               <button className="bg-white text-brand-orange px-10 py-5 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all shadow-xl hover:shadow-2xl uppercase tracking-widest transform hover:-translate-y-1">
                 Book Now
               </button>
-            </Link>
+            </Link> */}
+            <a href="https://book.jetitokbali.com/book/nasrom-travel-tours">
+              <button className="bg-white text-brand-orange px-10 py-5 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all shadow-xl hover:shadow-2xl uppercase tracking-widest transform hover:-translate-y-1">
+                Book Now
+              </button>
+            </a>
           </div>
         </div>
       </section>
